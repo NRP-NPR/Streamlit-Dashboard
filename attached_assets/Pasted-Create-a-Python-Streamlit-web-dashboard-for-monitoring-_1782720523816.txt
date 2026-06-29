@@ -1,0 +1,72 @@
+Create a Python Streamlit web dashboard for monitoring India auto competitor news.
+
+Use only these files:
+1. app.py
+2. requirements.txt
+3. .streamlit/config.toml
+
+Do not use React, Next.js, Flask, FastAPI, or any frontend framework.
+
+Dashboard concept:
+- Title: India Auto Competitor Intelligence Dashboard
+- Design theme: Hyundai-inspired clean corporate style, blue and white tones
+- Main colors: deep blue #002C5F, light blue #007FA8, white #FFFFFF, soft background #F7FAFD
+- Layout should be wide and dashboard-like
+
+Functions:
+- Collect competitor news from Google News RSS
+- Track these competitors:
+  - Tata Motors
+  - Mahindra
+  - Maruti Suzuki
+  - Kia India
+  - Toyota India
+  - MG Motor India
+  - Honda Cars India
+  - Skoda India
+  - Volkswagen India
+  - Renault India
+- Use feedparser to parse RSS feeds
+- Use pandas for data processing
+- Use plotly for charts
+- Use Streamlit for the UI
+
+Dashboard sections:
+1. Header with blue gradient
+2. Sidebar filters for competitor selection and category selection
+3. KPI cards:
+   - Total Articles
+   - Competitors Tracked
+   - Top Mentioned Brand
+   - Top Signal
+4. Bar chart: News Mentions by Brand
+5. Pie chart: Share of Voice by News Mentions
+6. Bar chart: Strategic Signals by Brand
+7. Recent Articles table with clickable links
+8. CSV download button
+
+Categories and keywords:
+- EV: ev, electric, battery, charging, bev
+- Hybrid: hybrid, hev
+- Investment: investment, invest, plant, factory, capacity, expansion, manufacturing
+- Launch: launch, unveil, facelift, booking, debut, introduced, variant
+- Price: price, discount, hike, increase, cut, offer
+- Export: export, shipment, overseas, global market
+- Policy: policy, regulation, gst, emission, cafe, subsidy, tax
+- Other: if no keywords match
+
+Important:
+- Cache RSS results for 1 hour
+- Add a refresh button in the sidebar
+- Remove duplicate articles by title and brand
+- Add a note that the dashboard measures media/search signals, not actual sales volume or market share
+- Make sure the app runs with:
+  streamlit run app.py --server.address 0.0.0.0 --server.port 8501
+
+Also create requirements.txt with:
+streamlit
+pandas
+feedparser
+plotly
+
+Also create .streamlit/config.toml with the blue and white theme.
