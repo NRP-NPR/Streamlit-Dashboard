@@ -28,25 +28,32 @@ st.markdown(
 
     .dashboard-header {
         background: linear-gradient(135deg, #002C5F 0%, #007FA8 100%);
-        padding: 2rem 2.5rem;
-        border-radius: 12px;
-        margin-bottom: 1.5rem;
+        padding: 1.25rem 2rem;
+        border-radius: 10px;
+        margin-bottom: 1rem;
         color: #FFFFFF;
     }
-    .dashboard-header h1 { margin: 0; font-size: 2rem; font-weight: 700; letter-spacing: 0.02em; }
-    .dashboard-header p  { margin: 0.4rem 0 0; font-size: 0.95rem; opacity: 0.85; }
+    .dashboard-header h1 { margin: 0; font-size: 1.6rem; font-weight: 700; letter-spacing: 0.02em; }
+    .dashboard-header p  { margin: 0.25rem 0 0; font-size: 0.88rem; opacity: 0.8; }
 
+    /* All KPI cards share a fixed height so the row is perfectly uniform */
+    .kpi-row { display: flex; gap: 0; }
     .kpi-card {
         background: #FFFFFF;
         border-radius: 10px;
-        padding: 1.25rem 1.5rem;
-        border-left: 5px solid #007FA8;
-        box-shadow: 0 2px 8px rgba(0,44,95,0.08);
-        height: 100%;
+        padding: 1.1rem 1.4rem;
+        border-left: 4px solid #007FA8;
+        box-shadow: 0 1px 6px rgba(0,44,95,0.07);
+        /* Fixed height forces uniformity regardless of value length */
+        min-height: 110px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
     }
-    .kpi-label { font-size: 0.78rem; color: #5A7290; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
-    .kpi-value { font-size: 2rem; color: #002C5F; font-weight: 800; margin-top: 0.25rem; line-height: 1; }
-    .kpi-sub   { font-size: 0.82rem; color: #007FA8; margin-top: 0.35rem; font-weight: 500; }
+    .kpi-label { font-size: 0.72rem; color: #7A90A8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 0.3rem; }
+    .kpi-value { font-size: 1.9rem; color: #002C5F; font-weight: 800; line-height: 1.1; }
+    .kpi-value-md { font-size: 1.35rem; color: #002C5F; font-weight: 800; line-height: 1.2; margin-top: 0.05rem; }
+    .kpi-sub   { font-size: 0.75rem; color: #8AAABE; margin-top: 0.3rem; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
     .section-heading {
         font-size: 1.05rem;
@@ -455,11 +462,8 @@ with c3:
     st.markdown(
         f'<div class="kpi-card">'
         f'<div class="kpi-label">Top Mentioned Brand</div>'
-        f'<div class="kpi-value" style="font-size:1.3rem;">{top_sov_brand}</div>'
+        f'<div class="kpi-value-md">{html.escape(str(top_sov_brand))}</div>'
         f'<div class="kpi-sub">highest mentions in market pool</div>'
-        f'<div class="kpi-tip">The competitor with the highest number of mentions '
-        f'in the collected market news pool. Indicates strongest media visibility '
-        f'during the selected period.</div>'
         f'</div>',
         unsafe_allow_html=True,
     )
@@ -468,28 +472,30 @@ with c4:
     st.markdown(
         f'<div class="kpi-card">'
         f'<div class="kpi-label">Top Signal Type</div>'
-        f'<div class="kpi-value" style="font-size:1.5rem;">{top_signal}</div>'
+        f'<div class="kpi-value-md">{html.escape(str(top_signal))}</div>'
         f'<div class="kpi-sub">dominant category</div>'
-        f'<div class="kpi-tip">The most frequent strategic category found in '
-        f'the collected articles — e.g. EV, Launch, Investment, or Price.</div>'
         f'</div>',
         unsafe_allow_html=True,
     )
 
-st.markdown("<br>", unsafe_allow_html=True)
-
-# ── Methodology note ─────────────────────────────────────────────────────────
-st.markdown(
-    '<div class="methodology-note">'
-    "ℹ️ <strong>Methodology:</strong> "
-    "<em>Share of Voice</em> and <em>News Mentions by Brand</em> are calculated from a "
-    "<strong>common market news pool</strong> (broad India auto market queries, "
-    "deduplicated, with brand mentions detected via keyword matching). "
-    "<em>Recent Articles</em> and <em>Strategic Signals</em> are collected from "
-    "<strong>brand-specific RSS feeds</strong>."
-    "</div>",
-    unsafe_allow_html=True,
-)
+# ── How to read this dashboard ───────────────────────────────────────────────
+with st.expander("ℹ️ How to read this dashboard", expanded=False):
+    st.markdown(
+        """
+| Metric | What it shows |
+|---|---|
+| **Brand Articles Collected** | Total articles fetched from brand-specific Google News RSS feeds (up to 15 per brand). Drives the Recent Articles table and Strategic Signals chart. |
+| **Competitors Tracked** | Number of brands currently selected in the sidebar filter. |
+| **Top Mentioned Brand** | The competitor with the highest number of mentions in the common market news pool — not from brand-specific feeds. Indicates strongest media visibility during the period. |
+| **Top Signal Type** | The most frequent strategic category (EV, Launch, Investment, Price, etc.) found across the brand-specific articles in the current filter. |
+| **News Mentions by Brand** | How often each competitor appears in the broader India auto market news pool. Based on keyword detection across deduplicated articles from 3 broad market queries. Reflects relative media presence, not sales or market share. |
+| **Share of Voice** | Each brand's percentage of total mentions in the market news pool. Calculated from news mentions only — not vehicle sales or revenue. |
+| **Strategic Signals by Brand** | Brand-specific articles classified by theme (EV, Hybrid, Investment, Launch, Price, Export, Policy). Shows what each competitor is publicly communicating about. |
+| **Recent Articles** | Original articles from brand-specific RSS feeds. Click any title to read the source. Use this to verify whether a signal is genuine. |
+| **Data Quality Check** | Flags potential reliability issues: a high "Other" ratio means keyword coverage may be incomplete; identical brand counts may indicate artificial sampling; low market pool coverage means few brands were detected in the broader news pool. |
+        """,
+        unsafe_allow_html=False,
+    )
 
 # ── Charts Row 1: Market pool-based ─────────────────────────────────────────
 col_left, col_right = st.columns([3, 2])
