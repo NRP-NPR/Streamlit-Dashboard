@@ -1,0 +1,18 @@
+kind = "web"
+previewPath = "/"
+title = "India Auto Dashboard"
+version = "1.0.0"
+id = "artifacts/india-auto-dashboard"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 22570
+
+[services.development]
+run = "streamlit run app.py --server.address 0.0.0.0 --server.port 22570"
+
+[services.env]
+PORT = "22570"
+BASE_PATH = "/"
