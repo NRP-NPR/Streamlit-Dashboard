@@ -1,0 +1,39 @@
+Please add short explanatory notes under each dashboard section so users can understand what each metric or chart means.
+
+Add explanations for:
+
+1. News Mentions by Brand
+Text:
+"Shows how often each competitor is mentioned in the collected India auto market news pool. This indicates relative media visibility, not actual sales performance or market share."
+
+2. Share of Voice
+Text:
+"Shows each brand's percentage share of total competitor mentions in the collected news pool. A higher share means the brand is receiving more media attention during the selected period."
+Also add:
+"Note: Share of Voice is calculated from news mentions, not vehicle sales."
+
+3. Strategic Signals by Brand
+Text:
+"Classifies competitor news into strategic themes such as EV, Hybrid, Investment, Launch, Price, Export, Policy, and Sales. This helps identify what each competitor is currently focusing on."
+
+4. Recent Articles
+Text:
+"Lists recent articles collected from brand-specific RSS feeds. Use this section to check the original source behind each signal and verify whether the article is relevant."
+
+5. Data Quality Check
+Text:
+"Checks whether the collected data is reliable enough for interpretation. A high 'Other' ratio or identical article counts across brands may indicate that the keyword logic or collection method needs improvement."
+
+6. Top Mentioned Brand tooltip or caption
+Text:
+"The competitor with the highest number of mentions in the collected market news pool. This indicates the brand with the strongest media visibility during the selected period."
+
+7. Top Signal tooltip or caption
+Text:
+"The most frequent strategic category found in the collected articles. This gives a quick view of the dominant topic in competitor news, such as EV, Launch, Investment, or Price."
+
+Design request:
+- Keep the explanations short and visually subtle.
+- Use small grey text under each title.
+- Do not make the dashboard look crowded.
+- Keep the Hyundai-inspired blue and white corporate style.

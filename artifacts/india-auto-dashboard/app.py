@@ -68,6 +68,36 @@ st.markdown(
         line-height: 1.5;
     }
 
+    /* Subtle explanatory captions under section headings */
+    .section-caption {
+        font-size: 0.78rem;
+        color: #8A9BB0;
+        margin-top: -0.6rem;
+        margin-bottom: 0.9rem;
+        line-height: 1.45;
+    }
+
+    /* KPI tooltip line */
+    .kpi-tip {
+        font-size: 0.74rem;
+        color: #9BAFC4;
+        margin-top: 0.4rem;
+        line-height: 1.4;
+        font-style: italic;
+    }
+
+    /* Data quality check box */
+    .dq-box {
+        background: #FAFCFF;
+        border: 1px solid #D4E4F0;
+        border-radius: 8px;
+        padding: 1rem 1.25rem;
+        margin-bottom: 0.5rem;
+    }
+    .dq-ok   { color: #276749; font-weight: 600; }
+    .dq-warn { color: #B7791F; font-weight: 600; }
+    .dq-bad  { color: #C53030; font-weight: 600; }
+
     a { color: #007FA8 !important; text-decoration: none; }
     a:hover { text-decoration: underline; }
 
@@ -422,12 +452,14 @@ with c2:
     )
 
 with c3:
-    pool_total = int(df_pool["Mentions"].sum()) if not df_pool.empty else 0
     st.markdown(
         f'<div class="kpi-card">'
-        f'<div class="kpi-label">Market Pool Mentions</div>'
-        f'<div class="kpi-value">{pool_total}</div>'
-        f'<div class="kpi-sub">total brand mentions in market pool</div>'
+        f'<div class="kpi-label">Top Mentioned Brand</div>'
+        f'<div class="kpi-value" style="font-size:1.3rem;">{top_sov_brand}</div>'
+        f'<div class="kpi-sub">highest mentions in market pool</div>'
+        f'<div class="kpi-tip">The competitor with the highest number of mentions '
+        f'in the collected market news pool. Indicates strongest media visibility '
+        f'during the selected period.</div>'
         f'</div>',
         unsafe_allow_html=True,
     )
@@ -438,6 +470,8 @@ with c4:
         f'<div class="kpi-label">Top Signal Type</div>'
         f'<div class="kpi-value" style="font-size:1.5rem;">{top_signal}</div>'
         f'<div class="kpi-sub">dominant category</div>'
+        f'<div class="kpi-tip">The most frequent strategic category found in '
+        f'the collected articles — e.g. EV, Launch, Investment, or Price.</div>'
         f'</div>',
         unsafe_allow_html=True,
     )
@@ -462,7 +496,10 @@ col_left, col_right = st.columns([3, 2])
 
 with col_left:
     st.markdown(
-        '<div class="section-heading">📊 News Mentions by Brand</div>',
+        '<div class="section-heading">📊 News Mentions by Brand</div>'
+        '<div class="section-caption">Shows how often each competitor is mentioned '
+        'in the collected India auto market news pool. This indicates relative media '
+        'visibility, not actual sales performance or market share.</div>',
         unsafe_allow_html=True,
     )
     if df_pool.empty:
@@ -490,7 +527,11 @@ with col_left:
 
 with col_right:
     st.markdown(
-        '<div class="section-heading">📢 Share of Voice</div>',
+        '<div class="section-heading">📢 Share of Voice</div>'
+        '<div class="section-caption">Each brand\'s percentage of total competitor '
+        'mentions in the collected news pool. A higher share means more media '
+        'attention during the selected period. '
+        '<em>Note: calculated from news mentions, not vehicle sales.</em></div>',
         unsafe_allow_html=True,
     )
     if df_pool.empty:
@@ -522,7 +563,10 @@ with col_right:
 
 # ── Charts Row 2: Brand feed-based ──────────────────────────────────────────
 st.markdown(
-    '<div class="section-heading">🎯 Strategic Signals by Brand</div>',
+    '<div class="section-heading">🎯 Strategic Signals by Brand</div>'
+    '<div class="section-caption">Classifies competitor news into strategic themes '
+    'such as EV, Hybrid, Investment, Launch, Price, Export, and Policy. '
+    'Helps identify what each competitor is currently focusing on.</div>',
     unsafe_allow_html=True,
 )
 
@@ -555,7 +599,10 @@ else:
 
 # ── Recent Articles Table ─────────────────────────────────────────────────────
 st.markdown(
-    '<div class="section-heading">📰 Recent Articles</div>',
+    '<div class="section-heading">📰 Recent Articles</div>'
+    '<div class="section-caption">Lists recent articles collected from brand-specific '
+    'RSS feeds. Use this section to check the original source behind each signal '
+    'and verify whether the article is relevant.</div>',
     unsafe_allow_html=True,
 )
 
@@ -583,6 +630,88 @@ else:
         display_df.to_html(escape=False, index=False),
         unsafe_allow_html=True,
     )
+
+# ── Data Quality Check ───────────────────────────────────────────────────────
+with st.expander("🔍 Data Quality Check", expanded=False):
+    st.markdown(
+        '<div class="section-caption" style="margin-top:0;">'
+        'Checks whether the collected data is reliable enough for interpretation. '
+        'A high "Other" ratio or identical article counts across brands may indicate '
+        'that the keyword logic or collection method needs improvement.'
+        '</div>',
+        unsafe_allow_html=True,
+    )
+
+    if not df_brand.empty:
+        dq_cols = st.columns(3)
+
+        # 1. Other-category ratio
+        other_count  = (df_brand["Category"] == "Other").sum()
+        other_ratio  = other_count / len(df_brand) * 100
+        if other_ratio >= 60:
+            dq_class, dq_icon = "dq-bad",  "🔴"
+        elif other_ratio >= 35:
+            dq_class, dq_icon = "dq-warn", "🟡"
+        else:
+            dq_class, dq_icon = "dq-ok",   "🟢"
+
+        with dq_cols[0]:
+            st.markdown(
+                f'<div class="dq-box">'
+                f'<div class="kpi-label">"Other" Category Ratio</div>'
+                f'<div class="kpi-value" style="font-size:1.6rem;">'
+                f'{dq_icon} {other_ratio:.0f}%</div>'
+                f'<div class="{dq_class}" style="font-size:0.78rem;margin-top:0.3rem;">'
+                f'{"High — keyword coverage may be incomplete" if other_ratio >= 60 else "Moderate — some articles uncategorised" if other_ratio >= 35 else "Good — most articles are categorised"}'
+                f'</div></div>',
+                unsafe_allow_html=True,
+            )
+
+        # 2. Uniform brand counts check
+        brand_counts_dq = df_brand["Brand"].value_counts()
+        is_uniform      = brand_counts_dq.nunique() == 1 and len(brand_counts_dq) > 1
+        uniq_counts     = brand_counts_dq.nunique()
+
+        with dq_cols[1]:
+            u_icon  = "🟡" if is_uniform else "🟢"
+            u_class = "dq-warn" if is_uniform else "dq-ok"
+            u_label = "All brands identical — may indicate equal sampling cap" \
+                      if is_uniform else f"{uniq_counts} different count values — looks natural"
+            st.markdown(
+                f'<div class="dq-box">'
+                f'<div class="kpi-label">Brand Count Distribution</div>'
+                f'<div class="kpi-value" style="font-size:1.6rem;">'
+                f'{u_icon} {"Uniform" if is_uniform else "Varied"}</div>'
+                f'<div class="{u_class}" style="font-size:0.78rem;margin-top:0.3rem;">'
+                f'{u_label}'
+                f'</div></div>',
+                unsafe_allow_html=True,
+            )
+
+        # 3. Market pool size
+        pool_size      = len(_fetch_raw_pool())
+        pool_brands    = int(df_pool["Mentions"].gt(0).sum()) if not df_pool.empty else 0
+        coverage_ratio = pool_brands / max(len(selected_brands), 1)
+        if pool_size == 0 or coverage_ratio < 0.3:
+            p_icon, p_class = "🔴", "dq-bad"
+        elif coverage_ratio < 0.6:
+            p_icon, p_class = "🟡", "dq-warn"
+        else:
+            p_icon, p_class = "🟢", "dq-ok"
+
+        with dq_cols[2]:
+            st.markdown(
+                f'<div class="dq-box">'
+                f'<div class="kpi-label">Market Pool Coverage</div>'
+                f'<div class="kpi-value" style="font-size:1.6rem;">'
+                f'{p_icon} {pool_brands}/{len(selected_brands)} brands</div>'
+                f'<div class="{p_class}" style="font-size:0.78rem;margin-top:0.3rem;">'
+                f'{pool_size} unique articles in pool'
+                f'</div></div>',
+                unsafe_allow_html=True,
+            )
+    else:
+        st.info("No data available for quality check.")
 
 # ── CSV Download ──────────────────────────────────────────────────────────────
 st.markdown("<br>", unsafe_allow_html=True)
