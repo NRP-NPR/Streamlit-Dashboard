@@ -19,16 +19,13 @@ st.set_page_config(
 st.markdown(
     """
     <style>
-    /* Base background */
     .stApp { background-color: #F7FAFD; }
 
-    /* Sidebar */
     section[data-testid="stSidebar"] { background-color: #002C5F; }
     section[data-testid="stSidebar"] * { color: #FFFFFF !important; }
     section[data-testid="stSidebar"] .stSelectbox label,
     section[data-testid="stSidebar"] .stMultiselect label { color: #BFD9F0 !important; }
 
-    /* Header banner */
     .dashboard-header {
         background: linear-gradient(135deg, #002C5F 0%, #007FA8 100%);
         padding: 2rem 2.5rem;
@@ -39,7 +36,6 @@ st.markdown(
     .dashboard-header h1 { margin: 0; font-size: 2rem; font-weight: 700; letter-spacing: 0.02em; }
     .dashboard-header p  { margin: 0.4rem 0 0; font-size: 0.95rem; opacity: 0.85; }
 
-    /* KPI cards */
     .kpi-card {
         background: #FFFFFF;
         border-radius: 10px;
@@ -52,7 +48,6 @@ st.markdown(
     .kpi-value { font-size: 2rem; color: #002C5F; font-weight: 800; margin-top: 0.25rem; line-height: 1; }
     .kpi-sub   { font-size: 0.82rem; color: #007FA8; margin-top: 0.35rem; font-weight: 500; }
 
-    /* Section headings */
     .section-heading {
         font-size: 1.05rem;
         font-weight: 700;
@@ -62,11 +57,20 @@ st.markdown(
         margin-bottom: 1rem;
     }
 
-    /* Article table links */
+    .methodology-note {
+        background: #E8F4FA;
+        border-left: 4px solid #007FA8;
+        border-radius: 6px;
+        padding: 0.65rem 1.1rem;
+        font-size: 0.81rem;
+        color: #2C5282;
+        margin-bottom: 1rem;
+        line-height: 1.5;
+    }
+
     a { color: #007FA8 !important; text-decoration: none; }
     a:hover { text-decoration: underline; }
 
-    /* Disclaimer banner */
     .disclaimer {
         background: #E8F1FA;
         border-left: 4px solid #007FA8;
@@ -77,10 +81,7 @@ st.markdown(
         margin-top: 1rem;
     }
 
-    /* Hide Streamlit default top padding */
     .block-container { padding-top: 1rem !important; }
-
-    /* DataFrame styling */
     .stDataFrame { border-radius: 8px; overflow: hidden; }
     </style>
     """,
@@ -88,27 +89,102 @@ st.markdown(
 )
 
 # ── Constants ────────────────────────────────────────────────────────────────
-COMPETITORS = {
-    "Tata Motors":       "Tata Motors India car",
-    "Mahindra":          "Mahindra car India",
-    "Maruti Suzuki":     "Maruti Suzuki India",
-    "Kia India":         "Kia India car",
-    "Toyota India":      "Toyota India car",
-    "MG Motor India":    "MG Motor India",
-    "Honda Cars India":  "Honda Cars India",
-    "Skoda India":       "Skoda India",
-    "Volkswagen India":  "Volkswagen India",
-    "Renault India":     "Renault India",
+
+# Brand-specific RSS query strings (for the Brand News Feed)
+BRAND_QUERIES = {
+    "Tata Motors":      "Tata Motors India car",
+    "Mahindra":         "Mahindra car India",
+    "Maruti Suzuki":    "Maruti Suzuki India",
+    "Kia India":        "Kia India car",
+    "Toyota India":     "Toyota India car",
+    "MG Motor India":   "MG Motor India",
+    "Honda Cars India": "Honda Cars India",
+    "Skoda India":      "Skoda India",
+    "Volkswagen India": "Volkswagen India",
+    "Renault India":    "Renault India",
 }
+
+# Keyword sets for detecting brand mentions in free text.
+# Patterns are matched case-insensitively against (title + summary).
+# Prefer compound model names over bare single-word tokens to reduce false positives.
+BRAND_KEYWORDS = {
+    "Tata Motors":      [
+        "tata motors", "tata nexon", "tata harrier", "tata safari",
+        "tata punch", "tata altroz", "tata curvv", "tata tigor",
+        "tata tiago", "tata ev", r"\btata\.ev\b",
+        # bare "tata" only after compound patterns fail; keep as fallback
+        r"\btata\b",
+    ],
+    "Mahindra":         [
+        "mahindra", r"\bm&m\b",
+        # XUV prefix without closing boundary catches XUV700/XUV400/XUV3XO/XUV9e
+        r"\bxuv\d*\b", r"\bxuv3xo\b", r"\bxev\b",
+        r"\bscorpio\b", r"\bthar\b", r"\bbolero\b",
+        r"\bbe\.6\b", r"\bbe6\b",
+    ],
+    "Maruti Suzuki":    [
+        "maruti suzuki", r"\bmaruti\b",
+        # avoid bare "suzuki" — matches Suzuki motorcycles (not India cars)
+        "suzuki india", "suzuki cars",
+        "grand vitara", r"\bbrezza\b", r"\bswift\b",
+        r"\bbaleno\b", r"\bdzire\b", r"\bfronx\b",
+        r"\bjimny\b", r"\bertiga\b",
+    ],
+    "Kia India":        [
+        r"\bkia\b", r"\bseltos\b", r"\bsonet\b",
+        r"\bcarens\b", r"\bsyros\b",
+        # EV model numbers are Kia-specific enough in India auto context
+        r"\bev6\b", r"\bev9\b",
+    ],
+    "Toyota India":     [
+        r"\btoyota\b", "innova crysta", "innova hycross",
+        r"\bfortuner\b", "urban cruiser hyryder", r"\bhyryder\b",
+        r"\bcamry\b", r"\bglanza\b",
+    ],
+    "MG Motor India":   [
+        # Always anchor as "mg motor" or "mg <model>" — bare "mg" too short/ambiguous
+        "mg motor", r"\bmg hector\b", r"\bmg astor\b",
+        r"\bmg windsor\b", r"\bmg comet\b", r"\bmg zs\b",
+        r"\bmg gloster\b", r"\bmg india\b",
+    ],
+    "Honda Cars India": [
+        # bare "honda" is reasonably brand-specific in India auto context
+        r"\bhonda\b", "honda city", "honda amaze",
+        "honda elevate", r"\bwr-v\b",
+    ],
+    "Skoda India":      [
+        r"\bskoda\b", r"\bkushaq\b", r"\bslavia\b",
+        r"\bkodiaq\b",
+    ],
+    "Volkswagen India": [
+        r"\bvolkswagen\b",
+        # bare "vw" is fine in India auto news; add explicit India context as fallback
+        r"\bvw\b", r"\btaigun\b", r"\bvirtus\b", r"\btiguan\b",
+    ],
+    "Renault India":    [
+        r"\brenault\b", r"\bkiger\b", r"\btriber\b",
+        r"\bkwid\b", r"\bduster\b",
+    ],
+}
+
+# Broad market pool queries (for Share of Voice)
+MARKET_POOL_QUERIES = [
+    "India auto industry passenger vehicle EV launch investment",
+    "India car market Tata Mahindra Maruti Kia Toyota MG",
+    "India SUV EV hybrid car launch market",
+]
 
 CATEGORIES = {
     "EV":         ["ev", "electric", "battery", "charging", "bev"],
     "Hybrid":     ["hybrid", "hev"],
-    "Investment": ["investment", "invest", "plant", "factory", "capacity", "expansion", "manufacturing"],
-    "Launch":     ["launch", "unveil", "facelift", "booking", "debut", "introduced", "variant"],
+    "Investment": ["investment", "invest", "plant", "factory", "capacity",
+                   "expansion", "manufacturing"],
+    "Launch":     ["launch", "unveil", "facelift", "booking", "debut",
+                   "introduced", "variant"],
     "Price":      ["price", "discount", "hike", "increase", "cut", "offer"],
     "Export":     ["export", "shipment", "overseas", "global market"],
-    "Policy":     ["policy", "regulation", "gst", "emission", "cafe", "subsidy", "tax"],
+    "Policy":     ["policy", "regulation", "gst", "emission", "cafe",
+                   "subsidy", "tax"],
 }
 
 BRAND_COLORS = [
@@ -133,38 +209,124 @@ def categorize(text: str) -> str:
     return "Other"
 
 
+def _parse_feed(query: str, limit: int) -> list[dict]:
+    """Fetch and parse a Google News RSS feed for the given query string."""
+    url = (
+        "https://news.google.com/rss/search?"
+        f"q={urllib.parse.quote(query)}&hl=en-IN&gl=IN&ceid=IN:en"
+    )
+    feed = feedparser.parse(url)
+    rows = []
+    for entry in feed.entries[:limit]:
+        title   = entry.get("title", "").strip()
+        link    = entry.get("link", "")
+        pub     = entry.get("published", "")
+        summary = re.sub(r"<[^>]+>", "", entry.get("summary", ""))
+        if not title:
+            continue
+        rows.append({
+            "Title":     title,
+            "Link":      link,
+            "Published": pub,
+            "Summary":   summary[:300],
+        })
+    return rows
+
+
+def _mentions_brand(text: str, brand: str) -> bool:
+    """Return True if any keyword for the brand matches in the given text."""
+    t = text.lower()
+    for kw in BRAND_KEYWORDS[brand]:
+        if re.search(kw, t):
+            return True
+    return False
+
+
+# ── Data fetchers (separately cached) ────────────────────────────────────────
+
 @st.cache_data(ttl=3600, show_spinner=False)
-def fetch_all_news(selected_brands: tuple) -> pd.DataFrame:
+def fetch_brand_feed(selected_brands: tuple) -> pd.DataFrame:
+    """
+    A. Brand News Feed — brand-specific RSS queries.
+    Used for Recent Articles and Strategic Signals charts.
+    Limits 15 articles per brand to keep the table manageable.
+    """
     rows = []
     for brand in selected_brands:
-        query = COMPETITORS[brand]
-        url = (
-            f"https://news.google.com/rss/search?"
-            f"q={urllib.parse.quote(query)}&hl=en-IN&gl=IN&ceid=IN:en"
-        )
-        feed = feedparser.parse(url)
-        for entry in feed.entries[:30]:
-            title   = entry.get("title", "").strip()
-            link    = entry.get("link", "")
-            pub     = entry.get("published", "")
-            summary = re.sub(r"<[^>]+>", "", entry.get("summary", ""))
-            if not title:
-                continue
+        query = BRAND_QUERIES[brand]
+        for item in _parse_feed(query, limit=15):
+            summary_short = (
+                item["Summary"][:220] + "…"
+                if len(item["Summary"]) > 220 else item["Summary"]
+            )
             rows.append({
                 "Brand":     brand,
-                "Title":     title,
-                "Link":      link,
-                "Published": pub,
-                "Summary":   summary[:220] + "…" if len(summary) > 220 else summary,
-                "Category":  categorize(title + " " + summary),
+                "Title":     item["Title"],
+                "Link":      item["Link"],
+                "Published": item["Published"],
+                "Summary":   summary_short,
+                "Category":  categorize(item["Title"] + " " + item["Summary"]),
             })
 
     if not rows:
-        return pd.DataFrame(columns=["Brand", "Title", "Link", "Published", "Summary", "Category"])
+        return pd.DataFrame(
+            columns=["Brand", "Title", "Link", "Published", "Summary", "Category"]
+        )
 
     df = pd.DataFrame(rows)
     df = df.drop_duplicates(subset=["Title", "Brand"])
     return df
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def _fetch_raw_pool() -> list[dict]:
+    """
+    Fetch and deduplicate the broad market news pool.
+    Cached independently of brand selection so re-filtering brands
+    doesn't trigger a fresh network fetch.
+    """
+    all_items: list[dict] = []
+    for query in MARKET_POOL_QUERIES:
+        all_items.extend(_parse_feed(query, limit=50))
+
+    seen: set[tuple] = set()
+    unique_items: list[dict] = []
+    for item in all_items:
+        key = (item["Title"].lower().strip(), item["Link"].strip())
+        if key not in seen:
+            seen.add(key)
+            unique_items.append(item)
+    return unique_items
+
+
+def fetch_market_pool(selected_brands: tuple) -> pd.DataFrame:
+    """
+    B. Market News Pool — count brand mentions in the deduplicated pool.
+    Uses _fetch_raw_pool() for network fetching (cached); mention counting
+    is a fast in-memory step that naturally adapts to brand selection.
+    """
+    unique_items = _fetch_raw_pool()
+
+    if not unique_items:
+        return pd.DataFrame(columns=["Brand", "Mentions"])
+
+    mention_counts: dict[str, int] = {b: 0 for b in selected_brands}
+    for item in unique_items:
+        text = (item["Title"] + " " + item["Summary"]).lower()
+        for brand in selected_brands:
+            if _mentions_brand(text, brand):
+                mention_counts[brand] += 1
+
+    rows = [
+        {"Brand": brand, "Mentions": count}
+        for brand, count in mention_counts.items()
+        if count > 0
+    ]
+
+    if not rows:
+        return pd.DataFrame(columns=["Brand", "Mentions"])
+
+    return pd.DataFrame(rows).sort_values("Mentions", ascending=False)
 
 
 # ── Sidebar ──────────────────────────────────────────────────────────────────
@@ -174,8 +336,8 @@ with st.sidebar:
 
     selected_brands = st.multiselect(
         "Select Competitors",
-        options=list(COMPETITORS.keys()),
-        default=list(COMPETITORS.keys()),
+        options=list(BRAND_QUERIES.keys()),
+        default=list(BRAND_QUERIES.keys()),
     )
 
     all_cats = ["All"] + list(CATEGORIES.keys()) + ["Other"]
@@ -211,32 +373,40 @@ if not selected_brands:
     st.stop()
 
 # ── Data load ────────────────────────────────────────────────────────────────
-with st.spinner("Fetching latest news from Google News RSS…"):
-    df_raw = fetch_all_news(tuple(selected_brands))
+brands_tuple = tuple(selected_brands)
 
-if df_raw.empty:
+with st.spinner("Fetching brand news feeds and market pool…"):
+    df_brand = fetch_brand_feed(brands_tuple)
+    df_pool  = fetch_market_pool(brands_tuple)
+
+if df_brand.empty and df_pool.empty:
     st.error("No articles found. This may be a temporary network issue. Try refreshing.")
     st.stop()
 
-# Apply category filter
-df = df_raw.copy()
+# Apply category filter to brand feed (used for articles table + signals chart)
+df_filtered = df_brand.copy()
 if selected_cat != "All":
-    df = df[df["Category"] == selected_cat]
+    df_filtered = df_filtered[df_filtered["Category"] == selected_cat]
 
 # ── KPI Cards ────────────────────────────────────────────────────────────────
-total_articles  = len(df)
-brands_tracked  = df["Brand"].nunique()
-top_brand       = df["Brand"].value_counts().idxmax() if total_articles else "—"
-top_signal      = df["Category"].value_counts().idxmax() if total_articles else "—"
+total_brand_articles = len(df_brand)
+brands_tracked       = len(selected_brands)
+top_sov_brand        = (
+    df_pool.iloc[0]["Brand"] if not df_pool.empty else "—"
+)
+top_signal = (
+    df_filtered["Category"].value_counts().idxmax()
+    if not df_filtered.empty else "—"
+)
 
 c1, c2, c3, c4 = st.columns(4)
 
 with c1:
     st.markdown(
         f'<div class="kpi-card">'
-        f'<div class="kpi-label">Total Articles</div>'
-        f'<div class="kpi-value">{total_articles}</div>'
-        f'<div class="kpi-sub">in filtered view</div>'
+        f'<div class="kpi-label">Brand Articles Collected</div>'
+        f'<div class="kpi-value">{total_brand_articles}</div>'
+        f'<div class="kpi-sub">from brand-specific feeds</div>'
         f'</div>',
         unsafe_allow_html=True,
     )
@@ -252,11 +422,12 @@ with c2:
     )
 
 with c3:
+    pool_total = int(df_pool["Mentions"].sum()) if not df_pool.empty else 0
     st.markdown(
         f'<div class="kpi-card">'
-        f'<div class="kpi-label">Top Mentioned Brand</div>'
-        f'<div class="kpi-value" style="font-size:1.3rem;">{top_brand}</div>'
-        f'<div class="kpi-sub">most news coverage</div>'
+        f'<div class="kpi-label">Market Pool Mentions</div>'
+        f'<div class="kpi-value">{pool_total}</div>'
+        f'<div class="kpi-sub">total brand mentions in market pool</div>'
         f'</div>',
         unsafe_allow_html=True,
     )
@@ -264,7 +435,7 @@ with c3:
 with c4:
     st.markdown(
         f'<div class="kpi-card">'
-        f'<div class="kpi-label">Top Signal</div>'
+        f'<div class="kpi-label">Top Signal Type</div>'
         f'<div class="kpi-value" style="font-size:1.5rem;">{top_signal}</div>'
         f'<div class="kpi-sub">dominant category</div>'
         f'</div>',
@@ -273,115 +444,166 @@ with c4:
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# ── Charts Row 1 ─────────────────────────────────────────────────────────────
-col_left, col_right = st.columns([3, 2])
-
-with col_left:
-    st.markdown('<div class="section-heading">📊 News Mentions by Brand</div>', unsafe_allow_html=True)
-    brand_counts = df["Brand"].value_counts().reset_index()
-    brand_counts.columns = ["Brand", "Articles"]
-
-    fig_bar = px.bar(
-        brand_counts,
-        x="Articles",
-        y="Brand",
-        orientation="h",
-        color="Articles",
-        color_continuous_scale=["#BFD9F0", "#007FA8", "#002C5F"],
-        text="Articles",
-    )
-    fig_bar.update_traces(textposition="outside", marker_line_width=0)
-    fig_bar.update_layout(
-        **PLOTLY_LAYOUT,
-        height=360,
-        yaxis=dict(categoryorder="total ascending", title=""),
-        xaxis_title="Number of Articles",
-        coloraxis_showscale=False,
-    )
-    st.plotly_chart(fig_bar, use_container_width=True)
-
-with col_right:
-    st.markdown('<div class="section-heading">🥧 Share of Voice</div>', unsafe_allow_html=True)
-    fig_pie = px.pie(
-        brand_counts,
-        values="Articles",
-        names="Brand",
-        color_discrete_sequence=BRAND_COLORS,
-        hole=0.45,
-    )
-    fig_pie.update_traces(textposition="outside", textinfo="label+percent")
-    fig_pie.update_layout(
-        **PLOTLY_LAYOUT,
-        height=360,
-        showlegend=False,
-    )
-    st.plotly_chart(fig_pie, use_container_width=True)
-
-# ── Charts Row 2 ─────────────────────────────────────────────────────────────
-st.markdown('<div class="section-heading">🎯 Strategic Signals by Brand</div>', unsafe_allow_html=True)
-
-signal_df = (
-    df.groupby(["Brand", "Category"])
-    .size()
-    .reset_index(name="Count")
-)
-
-cat_order = list(CATEGORIES.keys()) + ["Other"]
-fig_signal = px.bar(
-    signal_df,
-    x="Brand",
-    y="Count",
-    color="Category",
-    barmode="stack",
-    color_discrete_sequence=px.colors.qualitative.Set2,
-    category_orders={"Category": cat_order},
-)
-fig_signal.update_layout(
-    **PLOTLY_LAYOUT,
-    height=360,
-    xaxis_title="",
-    yaxis_title="Articles",
-    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-)
-st.plotly_chart(fig_signal, use_container_width=True)
-
-# ── Recent Articles Table ─────────────────────────────────────────────────────
-st.markdown('<div class="section-heading">📰 Recent Articles</div>', unsafe_allow_html=True)
-
-display_df = df[["Brand", "Category", "Title", "Published", "Link"]].copy()
-
-def safe_link(row) -> str:
-    """Return a sanitized HTML anchor only for http/https URLs."""
-    raw_url = str(row["Link"]).strip()
-    safe_url = raw_url if re.match(r"^https?://", raw_url) else "#"
-    safe_title = html.escape(str(row["Title"]))
-    safe_href  = html.escape(safe_url, quote=True)
-    return f'<a href="{safe_href}" target="_blank" rel="noopener noreferrer">{safe_title}</a>'
-
-display_df["Article"] = display_df.apply(safe_link, axis=1)
-display_df = display_df[["Brand", "Category", "Published", "Article"]].reset_index(drop=True)
-
+# ── Methodology note ─────────────────────────────────────────────────────────
 st.markdown(
-    display_df.to_html(escape=False, index=False),
+    '<div class="methodology-note">'
+    "ℹ️ <strong>Methodology:</strong> "
+    "<em>Share of Voice</em> and <em>News Mentions by Brand</em> are calculated from a "
+    "<strong>common market news pool</strong> (broad India auto market queries, "
+    "deduplicated, with brand mentions detected via keyword matching). "
+    "<em>Recent Articles</em> and <em>Strategic Signals</em> are collected from "
+    "<strong>brand-specific RSS feeds</strong>."
+    "</div>",
     unsafe_allow_html=True,
 )
 
+# ── Charts Row 1: Market pool-based ─────────────────────────────────────────
+col_left, col_right = st.columns([3, 2])
+
+with col_left:
+    st.markdown(
+        '<div class="section-heading">📊 News Mentions by Brand</div>',
+        unsafe_allow_html=True,
+    )
+    if df_pool.empty:
+        st.info("No brand mentions detected in the market news pool.")
+    else:
+        pool_sorted = df_pool.sort_values("Mentions", ascending=True)
+        fig_bar = px.bar(
+            pool_sorted,
+            x="Mentions",
+            y="Brand",
+            orientation="h",
+            color="Mentions",
+            color_continuous_scale=["#BFD9F0", "#007FA8", "#002C5F"],
+            text="Mentions",
+        )
+        fig_bar.update_traces(textposition="outside", marker_line_width=0)
+        fig_bar.update_layout(
+            **PLOTLY_LAYOUT,
+            height=360,
+            yaxis=dict(title=""),
+            xaxis_title="Mentions in market news pool",
+            coloraxis_showscale=False,
+        )
+        st.plotly_chart(fig_bar, use_container_width=True)  # noqa: STC-deprecated
+
+with col_right:
+    st.markdown(
+        '<div class="section-heading">📢 Share of Voice</div>',
+        unsafe_allow_html=True,
+    )
+    if df_pool.empty:
+        st.info("No data available for Share of Voice.")
+    else:
+        sov_total = df_pool["Mentions"].sum()
+        df_sov = df_pool.copy()
+        df_sov["Share (%)"] = (df_sov["Mentions"] / sov_total * 100).round(1)
+        df_sov = df_sov.sort_values("Share (%)", ascending=True)
+
+        fig_sov = px.bar(
+            df_sov,
+            x="Share (%)",
+            y="Brand",
+            orientation="h",
+            color="Share (%)",
+            color_continuous_scale=["#BFD9F0", "#007FA8", "#002C5F"],
+            text=df_sov["Share (%)"].apply(lambda v: f"{v:.1f}%"),
+        )
+        fig_sov.update_traces(textposition="outside", marker_line_width=0)
+        fig_sov.update_layout(
+            **PLOTLY_LAYOUT,
+            height=360,
+            yaxis=dict(title=""),
+            xaxis_title="Share of Voice (%)",
+            coloraxis_showscale=False,
+        )
+        st.plotly_chart(fig_sov, use_container_width=True)
+
+# ── Charts Row 2: Brand feed-based ──────────────────────────────────────────
+st.markdown(
+    '<div class="section-heading">🎯 Strategic Signals by Brand</div>',
+    unsafe_allow_html=True,
+)
+
+if df_filtered.empty:
+    st.info("No articles match the selected category filter.")
+else:
+    signal_df = (
+        df_filtered.groupby(["Brand", "Category"])
+        .size()
+        .reset_index(name="Count")
+    )
+    cat_order = list(CATEGORIES.keys()) + ["Other"]
+    fig_signal = px.bar(
+        signal_df,
+        x="Brand",
+        y="Count",
+        color="Category",
+        barmode="stack",
+        color_discrete_sequence=px.colors.qualitative.Set2,
+        category_orders={"Category": cat_order},
+    )
+    fig_signal.update_layout(
+        **PLOTLY_LAYOUT,
+        height=360,
+        xaxis_title="",
+        yaxis_title="Articles",
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+    )
+    st.plotly_chart(fig_signal, use_container_width=True)
+
+# ── Recent Articles Table ─────────────────────────────────────────────────────
+st.markdown(
+    '<div class="section-heading">📰 Recent Articles</div>',
+    unsafe_allow_html=True,
+)
+
+if df_filtered.empty:
+    st.info("No articles to display for the current filter selection.")
+else:
+    display_df = df_filtered[["Brand", "Category", "Title", "Published", "Link"]].copy()
+
+    def safe_link(row) -> str:
+        raw_url  = str(row["Link"]).strip()
+        safe_url = raw_url if re.match(r"^https?://", raw_url) else "#"
+        safe_title = html.escape(str(row["Title"]))
+        safe_href  = html.escape(safe_url, quote=True)
+        return f'<a href="{safe_href}" target="_blank" rel="noopener noreferrer">{safe_title}</a>'
+
+    display_df["Article"] = display_df.apply(safe_link, axis=1)
+    display_df = display_df[["Brand", "Category", "Published", "Article"]].reset_index(drop=True)
+
+    # Escape all plain-text columns so untrusted RSS content cannot inject HTML.
+    # The "Article" column is already sanitised by safe_link(); leave it as-is.
+    for col in ("Brand", "Category", "Published"):
+        display_df[col] = display_df[col].apply(lambda v: html.escape(str(v)))
+
+    st.markdown(
+        display_df.to_html(escape=False, index=False),
+        unsafe_allow_html=True,
+    )
+
 # ── CSV Download ──────────────────────────────────────────────────────────────
 st.markdown("<br>", unsafe_allow_html=True)
-csv_data = df[["Brand", "Category", "Title", "Published", "Link", "Summary"]].to_csv(index=False)
-st.download_button(
-    label="⬇️ Download Articles as CSV",
-    data=csv_data,
-    file_name="india_auto_competitor_news.csv",
-    mime="text/csv",
-    use_container_width=False,
-)
+if not df_brand.empty:
+    csv_data = df_brand[["Brand", "Category", "Title", "Published", "Link", "Summary"]].to_csv(
+        index=False
+    )
+    st.download_button(
+        label="⬇️ Download Brand Articles as CSV",
+        data=csv_data,
+        file_name="india_auto_brand_news.csv",
+        mime="text/csv",
+        use_container_width=False,
+    )
 
 # ── Disclaimer ────────────────────────────────────────────────────────────────
 st.markdown(
     '<div class="disclaimer">'
-    "⚠️ <strong>Note:</strong> This dashboard measures media and search signals derived from Google News RSS feeds. "
-    "It does not reflect actual sales volume, market share, or financial performance of any brand."
+    "⚠️ <strong>Note:</strong> This dashboard measures media and search signals derived "
+    "from Google News RSS feeds. It does not reflect actual sales volume, market share, "
+    "or financial performance of any brand."
     "</div>",
     unsafe_allow_html=True,
 )
