@@ -567,27 +567,7 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {
     """,
     unsafe_allow_html=True,
 )
-
 # ── Top language toggle ───────────────────────────────────────────────────────
-top_left, top_right = st.columns([5.5, 1.4])
-
-with top_left:
-    st.empty()
-
-with top_right:
-    lang_options = ["한국어", "English"]
-    lang_index = 0 if st.session_state["lang"] == "ko" else 1
-    lang_choice = st.selectbox(
-        "🌐 Language",
-        options=lang_options,
-        index=lang_index,
-        key="_lang_select_main",
-    )
-
-new_lang = "ko" if lang_choice == "한국어" else "en"
-if new_lang != st.session_state["lang"]:
-    st.session_state["lang"] = new_lang
-    st.rerun()
 # ── Constants ─────────────────────────────────────────────────────────────────
 BRAND_QUERIES = {
     "Tata Motors": "Tata Motors India car",
@@ -1024,7 +1004,24 @@ header_html = f"""
 """
 
 header_ph.markdown(header_html, unsafe_allow_html=True)
+# ── Language selector below header ────────────────────────────────────────────
+_, lang_col = st.columns([4, 1.4])
 
+with lang_col:
+    lang_options = ["KR · 한국어", "EN · English"]
+    lang_index = 0 if st.session_state["lang"] == "ko" else 1
+
+    lang_choice = st.selectbox(
+        label="Language",
+        options=lang_options,
+        index=lang_index,
+        key="_lang_select_main",
+    )
+
+new_lang = "ko" if "한국어" in lang_choice else "en"
+if new_lang != st.session_state["lang"]:
+    st.session_state["lang"] = new_lang
+    st.rerun()
 st.markdown(
     f"""
     <div class="meta-strip">
