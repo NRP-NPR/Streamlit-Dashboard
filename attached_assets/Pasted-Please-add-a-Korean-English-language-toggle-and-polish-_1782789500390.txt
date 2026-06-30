@@ -1,0 +1,111 @@
+Please add a Korean/English language toggle and polish the UI to look more modern and professional.
+
+Do not add Spline, 3D objects, animations, or external heavy design assets.
+Focus on clean dashboard UI.
+
+1. Add language toggle
+- Add a language selector at the top-right or sidebar.
+- Options:
+  - 한국어
+  - English
+- Default: 한국어
+- Translate all UI labels, section titles, captions, button text, and guide text.
+- Keep article titles, source names, URLs, and original news text in English.
+- The language toggle should not reset the collected data.
+
+2. Modernize the visual style
+Make the dashboard look more premium and corporate, not playful.
+
+Design direction:
+- Clean Hyundai-inspired blue and white theme
+- Use navy #002C5F as the main text/accent color
+- Use cyan #007FA8 only as a subtle accent
+- Use soft background #F6F9FC
+- Use white cards with light border #DCE8F2
+- Reduce heavy shadows
+- Use more whitespace and consistent spacing
+- Avoid emoji-heavy UI. Keep only minimal icons if needed.
+
+3. Header redesign
+Current header feels too large and heavy.
+Please redesign it:
+- Make the header lower in height
+- Use a clean gradient or white card with a thin blue accent line
+- Title should be clear but not oversized
+- Subtitle should be smaller and subtle
+- Add the language selector and last updated information near the top area if possible
+- Keep the design professional and business-report-like
+
+4. KPI card redesign
+Make KPI cards look more polished:
+- Equal height
+- Same width
+- White background
+- Thin border
+- Very subtle shadow
+- Rounded corners around 14px
+- Label in small grey-blue text
+- Value in deep navy
+- Subtitle in muted grey-blue
+- Remove any long explanation from KPI cards
+- Make the cards readable on mobile
+
+KPI cards should only show:
+- Label
+- Main value
+- Short subtitle, max 1 line
+
+5. Section cards
+Wrap each major chart section in a white card:
+- Section title
+- One-line explanation
+- Chart
+This applies to:
+- News Mentions by Brand / 브랜드별 뉴스 언급량
+- Share of Voice / 뉴스 언급 점유율
+- Strategic Signals by Brand / 브랜드별 전략 신호
+- Recent Articles / 최근 기사 목록
+- Data Quality Check / 데이터 품질 점검
+
+6. Improve section explanations
+Keep explanations short and subtle.
+Use smaller muted text.
+Do not let explanations dominate the page.
+
+7. Dashboard guide
+Keep "대시보드 해석 가이드 / How to read this dashboard" as a collapsed expander.
+Do not show long guide text by default.
+
+8. Mobile-friendly layout
+Make the layout responsive:
+- On desktop: KPI cards can appear in one row.
+- On mobile: KPI cards should stack cleanly or appear two per row if possible.
+- Charts should not be cut off.
+- Tables should remain horizontally scrollable if needed.
+- Avoid overly wide fixed layouts.
+
+9. Typography
+Make typography feel cleaner:
+- Use consistent font weights
+- Avoid too many bold elements
+- Use strong hierarchy:
+  - Page title
+  - KPI values
+  - Section titles
+  - Captions
+
+10. Keep existing functionality
+Do not break:
+- RSS fetching
+- Date range filter
+- Last updated timestamp
+- Latest article date
+- Market news pool SOV logic
+- Brand-specific recent articles
+- CSV download
+- Data quality check
+- Streamlit Community Cloud deployability
+
+Important:
+Do not convert this app to React, Next.js, Flask, FastAPI, or Vercel.
+Keep it as a Streamlit app.
