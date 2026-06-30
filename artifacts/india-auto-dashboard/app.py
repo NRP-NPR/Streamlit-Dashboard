@@ -14,7 +14,7 @@ st.set_page_config(
     page_title="India Auto Competitor Dashboard",
     page_icon=":car:",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
 # ── Language & persistent state ───────────────────────────────────────────────
@@ -28,34 +28,36 @@ lang = st.session_state["lang"]
 # ── Bilingual UI strings ──────────────────────────────────────────────────────
 STRINGS: dict[str, dict[str, str]] = {
     "ko": {
-        "page_title":        "인도 자동차 경쟁사 동향 대시보드",
-        "page_sub":          "인도 자동차 시장의 경쟁사 뉴스, 미디어 노출, 전략 신호를 모니터링합니다.",
-        "lang_label":        "언어",
-        "sidebar_title":     "필터",
-        "date_label":        "수집 기간",
-        "d_1":               "최근 1일",
-        "d_7":               "최근 7일",
-        "d_30":              "최근 30일",
-        "brand_label":       "경쟁사 선택",
-        "signal_label":      "신호 유형",
-        "all":               "전체",
-        "refresh":           "데이터 새로고침",
-        "refresh_note":      "데이터는 1시간마다 자동 갱신됩니다. 즉시 갱신하려면 위 버튼을 누르세요.",
-        "last_updated":      "최종 업데이트",
-        "latest_article":    "최신 기사 날짜",
-        "period":            "수집 기간",
-        "warn_select":       "최소 1개 이상의 경쟁사를 선택하세요.",
-        "loading":           "뉴스 데이터를 수집하는 중입니다...",
-        "no_data":           "기사를 찾을 수 없습니다. 일시적인 네트워크 오류일 수 있습니다.",
-        "kpi_articles":      "수집 기사 수",
-        "kpi_articles_sub":  "브랜드별 RSS 기준",
-        "kpi_brands":        "추적 브랜드",
-        "kpi_brands_sub":    "선택된 경쟁사",
-        "kpi_top_brand":     "최다 언급 브랜드",
+        "eyebrow": "COMPETITOR INTELLIGENCE · INDIA AUTO MARKET",
+        "built_by": "Built by Naaryn Park · Corporate Planning Intern· MVP v1.0",
+        "page_title": "인도 자동차 경쟁사 동향 대시보드",
+        "page_sub": "인도 자동차 시장의 경쟁사 뉴스, 미디어 노출, 전략 신호를 모니터링합니다.",
+        "lang_label": "언어",
+        "sidebar_title": "필터",
+        "date_label": "수집 기간",
+        "d_1": "최근 1일",
+        "d_7": "최근 7일",
+        "d_30": "최근 30일",
+        "brand_label": "경쟁사 선택",
+        "signal_label": "신호 유형",
+        "all": "전체",
+        "refresh": "데이터 새로고침",
+        "refresh_note": "데이터는 1시간마다 자동 갱신됩니다. 즉시 갱신하려면 위 버튼을 누르세요.",
+        "last_updated": "최종 업데이트",
+        "latest_article": "최신 기사 날짜",
+        "period": "수집 기간",
+        "warn_select": "최소 1개 이상의 경쟁사를 선택하세요.",
+        "loading": "뉴스 데이터를 수집하는 중입니다...",
+        "no_data": "기사를 찾을 수 없습니다. 일시적인 네트워크 오류일 수 있습니다.",
+        "kpi_articles": "수집 기사 수",
+        "kpi_articles_sub": "브랜드별 RSS 기준",
+        "kpi_brands": "추적 브랜드",
+        "kpi_brands_sub": "선택된 경쟁사",
+        "kpi_top_brand": "최다 언급 브랜드",
         "kpi_top_brand_sub": "시장 뉴스 풀 기준",
-        "kpi_top_signal":    "주요 전략 신호",
-        "kpi_top_signal_sub":"가장 많이 나타난 유형",
-        "guide_title":       "대시보드 해석 가이드",
+        "kpi_top_signal": "주요 전략 신호",
+        "kpi_top_signal_sub": "가장 많이 나타난 유형",
+        "guide_title": "대시보드 해석 가이드",
         "guide_table": (
             "| 항목 | 설명 |\n|---|---|\n"
             "| **수집 기사 수** | 브랜드별 Google News RSS에서 수집한 기사 수 (브랜드당 최대 15건). |\n"
@@ -68,72 +70,74 @@ STRINGS: dict[str, dict[str, str]] = {
             "| **최근 기사 목록** | 브랜드별 RSS에서 수집한 기사 목록. 제목 클릭 시 원문 확인 가능. |\n"
             "| **데이터 품질 점검** | 수집 데이터의 신뢰성 점검. 기타 비율과 기사 신선도를 확인합니다. |"
         ),
-        "mentions_title":    "브랜드별 뉴스 언급량",
-        "mentions_cap":      "인도 자동차 시장 광역 쿼리 풀에서 각 브랜드가 언급된 횟수입니다. 판매량·시장 점유율 지표가 아닙니다.",
-        "mentions_xaxis":    "언급 횟수",
-        "mentions_empty":    "시장 뉴스 풀에서 브랜드 언급이 감지되지 않았습니다.",
-        "sov_title":         "뉴스 언급 점유율",
-        "sov_cap":           "시장 뉴스 풀 내 전체 언급량 대비 각 브랜드 비율입니다. 차량 판매 기준이 아닙니다.",
-        "sov_xaxis":         "점유율 (%)",
-        "sov_empty":         "점유율 데이터를 사용할 수 없습니다.",
-        "signal_title":      "브랜드별 전략 신호",
-        "signal_cap":        "경쟁사 기사를 EV, 하이브리드, 투자, 출시, 가격, 수출, 정책 등 전략 테마로 분류합니다.",
-        "signal_yaxis":      "기사 수",
-        "signal_empty":      "선택한 필터 조건에 맞는 기사가 없습니다.",
-        "articles_title":    "최근 기사 목록",
-        "articles_cap":      "브랜드별 RSS 피드에서 수집한 최근 기사입니다. 기사 제목은 영어 원문으로 표시됩니다.",
-        "articles_empty":    "현재 필터 조건에 표시할 기사가 없습니다.",
-        "col_brand":         "브랜드",
-        "col_type":          "유형",
-        "col_date":          "날짜",
-        "col_article":       "기사",
-        "dq_title":          "데이터 품질 점검",
-        "dq_stale_banner":   "최신 기사 날짜가 3일 이상 경과했습니다. RSS 수집 상태를 확인하세요.",
-        "dq_feed":           "브랜드 피드 수집",
-        "dq_pool":           "시장 풀 {raw}건 수집 → {dedup}건 (중복 제거)",
-        "dq_other":          "기타 비율 (Other)",
-        "dq_freshness":      "기사 신선도",
-        "dq_latest":         "최신 기사",
-        "dq_fetched":        "수집 시각",
-        "dq_fresh":          "최신 상태 양호",
-        "dq_stale_msg":      "{days:.0f}일 경과 — 확인 필요",
-        "dq_unknown":        "게시일 정보 없음 — 신선도 판단 불가",
-        "dq_ok":             "분류 상태 양호",
-        "dq_warn":           "일부 기사 미분류",
-        "dq_bad":            "키워드 커버리지 부족 가능성",
-        "dq_empty":          "품질 점검에 사용할 데이터가 없습니다.",
-        "download":          "기사 CSV 다운로드",
-        "disclaimer":        "이 대시보드는 Google News RSS에서 수집한 미디어 노출 신호를 측정합니다. 실제 판매량, 시장 점유율, 재무 성과를 반영하지 않습니다.",
+        "mentions_title": "브랜드별 뉴스 언급량",
+        "mentions_cap": "인도 자동차 시장 광역 쿼리 풀에서 각 브랜드가 언급된 횟수입니다. 판매량·시장 점유율 지표가 아닙니다.",
+        "mentions_xaxis": "언급 횟수",
+        "mentions_empty": "시장 뉴스 풀에서 브랜드 언급이 감지되지 않았습니다.",
+        "sov_title": "뉴스 언급 점유율",
+        "sov_cap": "시장 뉴스 풀 내 전체 언급량 대비 각 브랜드 비율입니다. 차량 판매 기준이 아닙니다.",
+        "sov_xaxis": "점유율 (%)",
+        "sov_empty": "점유율 데이터를 사용할 수 없습니다.",
+        "signal_title": "브랜드별 전략 신호",
+        "signal_cap": "경쟁사 기사를 EV, 하이브리드, 투자, 출시, 가격, 수출, 정책 등 전략 테마로 분류합니다.",
+        "signal_yaxis": "기사 수",
+        "signal_empty": "선택한 필터 조건에 맞는 기사가 없습니다.",
+        "articles_title": "최근 기사 목록",
+        "articles_cap": "브랜드별 RSS 피드에서 수집한 최근 기사입니다. 기사 제목은 영어 원문으로 표시됩니다.",
+        "articles_empty": "현재 필터 조건에 표시할 기사가 없습니다.",
+        "col_brand": "브랜드",
+        "col_type": "유형",
+        "col_date": "날짜",
+        "col_article": "기사",
+        "dq_title": "데이터 품질 점검",
+        "dq_stale_banner": "최신 기사 날짜가 3일 이상 경과했습니다. RSS 수집 상태를 확인하세요.",
+        "dq_feed": "브랜드 피드 수집",
+        "dq_pool": "시장 풀 {raw}건 수집 → {dedup}건 (중복 제거)",
+        "dq_other": "기타 비율 (Other)",
+        "dq_freshness": "기사 신선도",
+        "dq_latest": "최신 기사",
+        "dq_fetched": "수집 시각",
+        "dq_fresh": "최신 상태 양호",
+        "dq_stale_msg": "{days:.0f}일 경과 — 확인 필요",
+        "dq_unknown": "게시일 정보 없음 — 신선도 판단 불가",
+        "dq_ok": "분류 상태 양호",
+        "dq_warn": "일부 기사 미분류",
+        "dq_bad": "키워드 커버리지 부족 가능성",
+        "dq_empty": "품질 점검에 사용할 데이터가 없습니다.",
+        "download": "기사 CSV 다운로드",
+        "disclaimer": "이 대시보드는 Google News RSS에서 수집한 미디어 노출 신호를 측정합니다. 실제 판매량, 시장 점유율, 재무 성과를 반영하지 않습니다.",
     },
     "en": {
-        "page_title":        "India Auto Competitor Intelligence Dashboard",
-        "page_sub":          "Monitor competitor news, media exposure, and strategic signals in the Indian auto market.",
-        "lang_label":        "Language",
-        "sidebar_title":     "Filters",
-        "date_label":        "Date Range",
-        "d_1":               "Last 1 Day",
-        "d_7":               "Last 7 Days",
-        "d_30":              "Last 30 Days",
-        "brand_label":       "Competitors",
-        "signal_label":      "Signal Type",
-        "all":               "All",
-        "refresh":           "Refresh Data",
-        "refresh_note":      "Data refreshes automatically every hour. Click above to refresh immediately.",
-        "last_updated":      "Last Updated",
-        "latest_article":    "Latest Article",
-        "period":            "Date Range",
-        "warn_select":       "Please select at least one competitor.",
-        "loading":           "Fetching news data...",
-        "no_data":           "No articles found. This may be a temporary network error.",
-        "kpi_articles":      "Articles Collected",
-        "kpi_articles_sub":  "From brand RSS feeds",
-        "kpi_brands":        "Brands Tracked",
-        "kpi_brands_sub":    "Selected competitors",
-        "kpi_top_brand":     "Top Mentioned Brand",
+        "eyebrow": "COMPETITOR INTELLIGENCE · INDIA AUTO MARKET",
+        "built_by": "Built by Naaryn Park · Corporate Planning Intern· MVP v1.0",
+        "page_title": "India Auto Competitor Intelligence Dashboard",
+        "page_sub": "Monitor competitor news, media exposure, and strategic signals in the Indian auto market.",
+        "lang_label": "Language",
+        "sidebar_title": "Filters",
+        "date_label": "Date Range",
+        "d_1": "Last 1 Day",
+        "d_7": "Last 7 Days",
+        "d_30": "Last 30 Days",
+        "brand_label": "Competitors",
+        "signal_label": "Signal Type",
+        "all": "All",
+        "refresh": "Refresh Data",
+        "refresh_note": "Data refreshes automatically every hour. Click above to refresh immediately.",
+        "last_updated": "Last Updated",
+        "latest_article": "Latest Article",
+        "period": "Date Range",
+        "warn_select": "Please select at least one competitor.",
+        "loading": "Fetching news data...",
+        "no_data": "No articles found. This may be a temporary network error.",
+        "kpi_articles": "Articles Collected",
+        "kpi_articles_sub": "From brand RSS feeds",
+        "kpi_brands": "Brands Tracked",
+        "kpi_brands_sub": "Selected competitors",
+        "kpi_top_brand": "Top Mentioned Brand",
         "kpi_top_brand_sub": "By market news pool",
-        "kpi_top_signal":    "Top Strategic Signal",
-        "kpi_top_signal_sub":"Most frequent theme",
-        "guide_title":       "How to Read This Dashboard",
+        "kpi_top_signal": "Top Strategic Signal",
+        "kpi_top_signal_sub": "Most frequent theme",
+        "guide_title": "How to Read This Dashboard",
         "guide_table": (
             "| Metric | Description |\n|---|---|\n"
             "| **Articles Collected** | Articles from brand-specific Google News RSS feeds (up to 15 per brand). |\n"
@@ -146,42 +150,42 @@ STRINGS: dict[str, dict[str, str]] = {
             "| **Recent Articles** | Latest articles from brand RSS feeds. Click titles to read originals. |\n"
             "| **Data Quality Check** | Reliability check: Other ratio and article freshness. |"
         ),
-        "mentions_title":    "News Mentions by Brand",
-        "mentions_cap":      "Times each brand was mentioned in the broad India auto market news pool. Not a sales or market share metric.",
-        "mentions_xaxis":    "Mention Count",
-        "mentions_empty":    "No brand mentions detected in the market news pool.",
-        "sov_title":         "Share of Voice",
-        "sov_cap":           "Each brand's share of total mentions in the market news pool. Media exposure, not vehicle sales.",
-        "sov_xaxis":         "Share of Voice (%)",
-        "sov_empty":         "Share of voice data unavailable.",
-        "signal_title":      "Strategic Signals by Brand",
-        "signal_cap":        "Competitor articles classified into strategic themes: EV, Hybrid, Investment, Launch, Price, Export, Policy.",
-        "signal_yaxis":      "Article Count",
-        "signal_empty":      "No articles match the selected filter.",
-        "articles_title":    "Recent Articles",
-        "articles_cap":      "Latest articles from brand-specific RSS feeds. Titles are shown in English as published.",
-        "articles_empty":    "No articles to display for the current filter.",
-        "col_brand":         "Brand",
-        "col_type":          "Type",
-        "col_date":          "Date",
-        "col_article":       "Article",
-        "dq_title":          "Data Quality Check",
-        "dq_stale_banner":   "Latest article date is more than 3 days old. Please check RSS collection status.",
-        "dq_feed":           "Brand Feed Articles",
-        "dq_pool":           "Market pool: {raw} fetched → {dedup} after dedup",
-        "dq_other":          "Other Category Ratio",
-        "dq_freshness":      "Article Freshness",
-        "dq_latest":         "Latest Article",
-        "dq_fetched":        "Last Fetched",
-        "dq_fresh":          "Data is fresh",
-        "dq_stale_msg":      "{days:.0f} days old — check collection",
-        "dq_unknown":        "No publish dates — freshness unknown",
-        "dq_ok":             "Classification healthy",
-        "dq_warn":           "Some articles unclassified",
-        "dq_bad":            "Possible keyword coverage gap",
-        "dq_empty":          "No data available for quality check.",
-        "download":          "Download Articles CSV",
-        "disclaimer":        "This dashboard measures media exposure signals from Google News RSS. It does not reflect actual sales volumes, market share, or financial performance.",
+        "mentions_title": "News Mentions by Brand",
+        "mentions_cap": "Times each brand was mentioned in the broad India auto market news pool. Not a sales or market share metric.",
+        "mentions_xaxis": "Mention Count",
+        "mentions_empty": "No brand mentions detected in the market news pool.",
+        "sov_title": "Share of Voice",
+        "sov_cap": "Each brand's share of total mentions in the market news pool. Media exposure, not vehicle sales.",
+        "sov_xaxis": "Share of Voice (%)",
+        "sov_empty": "Share of voice data unavailable.",
+        "signal_title": "Strategic Signals by Brand",
+        "signal_cap": "Competitor articles classified into strategic themes: EV, Hybrid, Investment, Launch, Price, Export, Policy.",
+        "signal_yaxis": "Article Count",
+        "signal_empty": "No articles match the selected filter.",
+        "articles_title": "Recent Articles",
+        "articles_cap": "Latest articles from brand-specific RSS feeds. Titles are shown in English as published.",
+        "articles_empty": "No articles to display for the current filter.",
+        "col_brand": "Brand",
+        "col_type": "Type",
+        "col_date": "Date",
+        "col_article": "Article",
+        "dq_title": "Data Quality Check",
+        "dq_stale_banner": "Latest article date is more than 3 days old. Please check RSS collection status.",
+        "dq_feed": "Brand Feed Articles",
+        "dq_pool": "Market pool: {raw} fetched → {dedup} after dedup",
+        "dq_other": "Other Category Ratio",
+        "dq_freshness": "Article Freshness",
+        "dq_latest": "Latest Article",
+        "dq_fetched": "Last Fetched",
+        "dq_fresh": "Data is fresh",
+        "dq_stale_msg": "{days:.0f} days old — check collection",
+        "dq_unknown": "No publish dates — freshness unknown",
+        "dq_ok": "Classification healthy",
+        "dq_warn": "Some articles unclassified",
+        "dq_bad": "Possible keyword coverage gap",
+        "dq_empty": "No data available for quality check.",
+        "download": "Download Articles CSV",
+        "disclaimer": "This dashboard measures media exposure signals from Google News RSS. It does not reflect actual sales volumes, market share, or financial performance.",
     },
 }
 
@@ -198,10 +202,38 @@ st.markdown(
         font-family: Inter, system-ui, -apple-system, sans-serif;
     }
     .block-container {
-        padding-top: 1.25rem !important;
-        padding-bottom: 2.5rem !important;
-        max-width: 1400px;
+    width: 100% !important;
+    max-width: 1120px !important;
+    padding-top: 1.25rem !important;
+    padding-bottom: 2.5rem !important;
+    padding-left: 1.25rem !important;
+    padding-right: 1.25rem !important;
+    margin: 0 auto !important;
+    box-sizing: border-box !important;
+}
+
+html, body, .stApp, [data-testid="stAppViewContainer"] {
+    overflow-x: hidden !important;
+}
+
+[data-testid="stHorizontalBlock"] {
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+.js-plotly-plot, .plot-container, .plotly {
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+}
+
+@media (max-width: 768px) {
+    .block-container {
+        max-width: 100% !important;
+        padding-left: 0.85rem !important;
+        padding-right: 0.85rem !important;
+        padding-top: 0.75rem !important;
     }
+}
 
     /* ── Sidebar ── */
     section[data-testid="stSidebar"] {
@@ -239,6 +271,9 @@ st.markdown(
     /* ── Page header card ── */
     .page-header {
         background: #FFFFFF;
+        width: 100%;
+        box-sizing: border-box;
+        overflow: visible;
         border: 1px solid #D8E6F0;
         border-top: 3px solid #002C5F;
         border-radius: 10px;
@@ -246,13 +281,15 @@ st.markdown(
         margin-bottom: 0.75rem;
     }
     .ph-title {
-        font-size: 1.2rem;
-        font-weight: 700;
-        color: #001A38;
-        letter-spacing: -0.01em;
-        margin: 0 0 0.2rem 0;
-        line-height: 1.2;
-    }
+    font-size: clamp(1.45rem, 2vw, 1.85rem);
+    font-weight: 750;
+    color: #001A38;
+    letter-spacing: -0.02em;
+    margin: 0 0 0.35rem 0;
+    line-height: 1.25;
+    word-break: keep-all;
+    overflow-wrap: break-word;
+}
     .ph-sub {
         font-size: 0.78rem;
         color: #7A90A8;
@@ -260,31 +297,77 @@ st.markdown(
         font-weight: 400;
         line-height: 1.4;
     }
-    .ph-meta {
-        display: flex;
-        gap: 2.5rem;
-        margin-top: 0.8rem;
-        padding-top: 0.7rem;
-        border-top: 1px solid #EBF2F8;
-        flex-wrap: wrap;
-        align-items: center;
-    }
-    .ph-meta-item { display: flex; flex-direction: column; }
-    .ph-meta-label {
-        font-size: 0.6rem;
-        color: #A0B4C8;
-        font-weight: 600;
+    .ph-eyebrow {
+        display: inline-block;
+        font-size: 0.62rem;
+        color: #007FA8;
+        font-weight: 700;
+        letter-spacing: 0.14em;
         text-transform: uppercase;
-        letter-spacing: 0.09em;
-        margin-bottom: 0.1rem;
+        margin-bottom: 0.55rem;
     }
-    .ph-meta-value {
-        font-size: 0.8rem;
-        color: #001A38;
-        font-weight: 600;
-    }
-    .ph-stale { color: #C53030 !important; }
 
+    .ph-eyebrow {
+        display: inline-block;
+        font-size: 0.62rem;
+        color: #007FA8;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        margin-bottom: 0.55rem;
+    }
+
+    .ph-built {
+        display: inline-block;
+        font-size: 0.72rem;
+        color: #6F86A0;
+        margin-top: 0.75rem;
+        font-weight: 600;
+        background: #F1F7FC;
+        border: 1px solid #D8E6F0;
+        border-radius: 999px;
+        padding: 0.28rem 0.65rem;
+    }
+    .page-header {
+        background: #FFFFFF;
+        width: 100%;
+        box-sizing: border-box;
+        overflow: visible;
+        border: 1px solid #D8E6F0;
+        border-top: 3px solid #002C5F;
+        border-radius: 10px;
+        padding: 1.35rem 1.75rem 1.2rem;
+        margin-bottom: 0.9rem;
+        display: block;
+    }
+
+    .ph-meta-mini {
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+    }
+
+    .ph-meta-label {
+        font-size: 0.58rem;
+        color: #8EA7BC;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+    }
+
+    .ph-meta-value {
+        font-size: 0.78rem;
+        color: #001A38;
+        font-weight: 700;
+        line-height: 1.25;
+    }
+
+    .ph-stale {
+        color: #C53030 !important;
+    }
+
+    @media (max-width: 700px) {
+    }
     /* ── KPI cards ── */
     .kpi-card {
         background: #FFFFFF;
@@ -451,72 +534,169 @@ st.markdown(
         margin-top: 1.5rem;
         line-height: 1.5;
     }
+
+    @media (max-width: 700px) {
+    }
+    .meta-strip {
+        background: #FFFFFF;
+        border: 1px solid #D8E6F0;
+        border-radius: 10px;
+        padding: 0.85rem 1.15rem;
+        margin: -0.25rem 0 0.9rem 0;
+        display: flex;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+        font-size: 0.78rem;
+        color: #001A38;
+        box-shadow: 0 1px 3px rgba(0,30,60,0.04);
+    }
+
+    .meta-strip b {
+        color: #8EA7BC;
+        font-size: 0.68rem;
+        font-weight: 700;
+    }
+
+    @media (max-width: 700px) {
+        .meta-strip {
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+    }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
+# ── Top language toggle ───────────────────────────────────────────────────────
+top_left, top_right = st.columns([5.5, 1.4])
+
+with top_left:
+    st.empty()
+
+with top_right:
+    lang_options = ["한국어", "English"]
+    lang_index = 0 if st.session_state["lang"] == "ko" else 1
+    lang_choice = st.selectbox(
+        "🌐 Language",
+        options=lang_options,
+        index=lang_index,
+        key="_lang_select_main",
+    )
+
+new_lang = "ko" if lang_choice == "한국어" else "en"
+if new_lang != st.session_state["lang"]:
+    st.session_state["lang"] = new_lang
+    st.rerun()
 # ── Constants ─────────────────────────────────────────────────────────────────
 BRAND_QUERIES = {
-    "Tata Motors":      "Tata Motors India car",
-    "Mahindra":         "Mahindra car India",
-    "Maruti Suzuki":    "Maruti Suzuki India",
-    "Kia India":        "Kia India car",
-    "Toyota India":     "Toyota India car",
-    "MG Motor India":   "MG Motor India",
+    "Tata Motors": "Tata Motors India car",
+    "Mahindra": "Mahindra car India",
+    "Maruti Suzuki": "Maruti Suzuki India",
+    "Kia India": "Kia India car",
+    "Toyota India": "Toyota India car",
+    "MG Motor India": "MG Motor India",
     "Honda Cars India": "Honda Cars India",
-    "Skoda India":      "Skoda India",
+    "Skoda India": "Skoda India",
     "Volkswagen India": "Volkswagen India",
-    "Renault India":    "Renault India",
+    "Renault India": "Renault India",
 }
 
 BRAND_KEYWORDS = {
-    "Tata Motors":      [
-        "tata motors", "tata nexon", "tata harrier", "tata safari",
-        "tata punch", "tata altroz", "tata curvv", "tata tigor",
-        "tata tiago", "tata ev", r"\btata\b",
+    "Tata Motors": [
+        "tata motors",
+        "tata nexon",
+        "tata harrier",
+        "tata safari",
+        "tata punch",
+        "tata altroz",
+        "tata curvv",
+        "tata tigor",
+        "tata tiago",
+        "tata ev",
+        r"\btata\b",
     ],
-    "Mahindra":         [
-        "mahindra", r"\bm&m\b",
-        r"\bxuv\d*\b", r"\bxuv3xo\b", r"\bxev\b",
-        r"\bscorpio\b", r"\bthar\b", r"\bbolero\b",
-        r"\bbe\.6\b", r"\bbe6\b",
+    "Mahindra": [
+        "mahindra",
+        r"\bm&m\b",
+        r"\bxuv\d*\b",
+        r"\bxuv3xo\b",
+        r"\bxev\b",
+        r"\bscorpio\b",
+        r"\bthar\b",
+        r"\bbolero\b",
+        r"\bbe\.6\b",
+        r"\bbe6\b",
     ],
-    "Maruti Suzuki":    [
-        "maruti suzuki", r"\bmaruti\b",
-        "suzuki india", "suzuki cars",
-        "grand vitara", r"\bbrezza\b", r"\bswift\b",
-        r"\bbaleno\b", r"\bdzire\b", r"\bfronx\b",
-        r"\bjimny\b", r"\bertiga\b",
+    "Maruti Suzuki": [
+        "maruti suzuki",
+        r"\bmaruti\b",
+        "suzuki india",
+        "suzuki cars",
+        "grand vitara",
+        r"\bbrezza\b",
+        r"\bswift\b",
+        r"\bbaleno\b",
+        r"\bdzire\b",
+        r"\bfronx\b",
+        r"\bjimny\b",
+        r"\bertiga\b",
     ],
-    "Kia India":        [
-        r"\bkia\b", r"\bseltos\b", r"\bsonet\b",
-        r"\bcarens\b", r"\bsyros\b", r"\bev6\b", r"\bev9\b",
+    "Kia India": [
+        r"\bkia\b",
+        r"\bseltos\b",
+        r"\bsonet\b",
+        r"\bcarens\b",
+        r"\bsyros\b",
+        r"\bev6\b",
+        r"\bev9\b",
     ],
-    "Toyota India":     [
-        r"\btoyota\b", "innova crysta", "innova hycross",
-        r"\bfortuner\b", "urban cruiser hyryder", r"\bhyryder\b",
-        r"\bcamry\b", r"\bglanza\b",
+    "Toyota India": [
+        r"\btoyota\b",
+        "innova crysta",
+        "innova hycross",
+        r"\bfortuner\b",
+        "urban cruiser hyryder",
+        r"\bhyryder\b",
+        r"\bcamry\b",
+        r"\bglanza\b",
     ],
-    "MG Motor India":   [
-        "mg motor", r"\bmg hector\b", r"\bmg astor\b",
-        r"\bmg windsor\b", r"\bmg comet\b", r"\bmg zs\b",
-        r"\bmg gloster\b", r"\bmg india\b",
+    "MG Motor India": [
+        "mg motor",
+        r"\bmg hector\b",
+        r"\bmg astor\b",
+        r"\bmg windsor\b",
+        r"\bmg comet\b",
+        r"\bmg zs\b",
+        r"\bmg gloster\b",
+        r"\bmg india\b",
     ],
     "Honda Cars India": [
-        r"\bhonda\b", "honda city", "honda amaze",
-        "honda elevate", r"\bwr-v\b",
+        r"\bhonda\b",
+        "honda city",
+        "honda amaze",
+        "honda elevate",
+        r"\bwr-v\b",
     ],
-    "Skoda India":      [
-        r"\bskoda\b", r"\bkushaq\b", r"\bslavia\b", r"\bkodiaq\b",
+    "Skoda India": [
+        r"\bskoda\b",
+        r"\bkushaq\b",
+        r"\bslavia\b",
+        r"\bkodiaq\b",
     ],
     "Volkswagen India": [
-        r"\bvolkswagen\b", r"\bvw\b", r"\btaigun\b",
-        r"\bvirtus\b", r"\btiguan\b",
+        r"\bvolkswagen\b",
+        r"\bvw\b",
+        r"\btaigun\b",
+        r"\bvirtus\b",
+        r"\btiguan\b",
     ],
-    "Renault India":    [
-        r"\brenault\b", r"\bkiger\b", r"\btriber\b",
-        r"\bkwid\b", r"\bduster\b",
+    "Renault India": [
+        r"\brenault\b",
+        r"\bkiger\b",
+        r"\btriber\b",
+        r"\bkwid\b",
+        r"\bduster\b",
     ],
 }
 
@@ -527,35 +707,48 @@ MARKET_POOL_QUERIES = [
 ]
 
 CATEGORIES = {
-    "EV":         ["ev", "electric", "battery", "charging", "bev"],
-    "Hybrid":     ["hybrid", "hev"],
-    "Investment": ["investment", "invest", "plant", "factory", "capacity",
-                   "expansion", "manufacturing"],
-    "Launch":     ["launch", "unveil", "facelift", "booking", "debut",
-                   "introduced", "variant"],
-    "Price":      ["price", "discount", "hike", "increase", "cut", "offer"],
-    "Export":     ["export", "shipment", "overseas", "global market"],
-    "Policy":     ["policy", "regulation", "gst", "emission", "cafe",
-                   "subsidy", "tax"],
+    "EV": ["ev", "electric", "battery", "charging", "bev"],
+    "Hybrid": ["hybrid", "hev"],
+    "Investment": [
+        "investment",
+        "invest",
+        "plant",
+        "factory",
+        "capacity",
+        "expansion",
+        "manufacturing",
+    ],
+    "Launch": [
+        "launch",
+        "unveil",
+        "facelift",
+        "booking",
+        "debut",
+        "introduced",
+        "variant",
+    ],
+    "Price": ["price", "discount", "hike", "increase", "cut", "offer"],
+    "Export": ["export", "shipment", "overseas", "global market"],
+    "Policy": ["policy", "regulation", "gst", "emission", "cafe", "subsidy", "tax"],
 }
 
 # Corporate colour palette for strategic signals (no Set2)
 SIGNAL_COLORS = {
-    "EV":         "#007FA8",
-    "Hybrid":     "#2E9E77",
+    "EV": "#007FA8",
+    "Hybrid": "#2E9E77",
     "Investment": "#5B7EB8",
-    "Launch":     "#D9873A",
-    "Price":      "#8E6DB8",
-    "Export":     "#4A96CA",
-    "Policy":     "#B05050",
-    "Other":      "#9AAFC0",
+    "Launch": "#D9873A",
+    "Price": "#8E6DB8",
+    "Export": "#4A96CA",
+    "Policy": "#B05050",
+    "Other": "#9AAFC0",
 }
 
 PLOTLY_LAYOUT = dict(
     paper_bgcolor="#FFFFFF",
     plot_bgcolor="rgba(0,0,0,0)",
     font=dict(family="Inter, system-ui, sans-serif", color="#001A38", size=12),
-    margin=dict(l=10, r=20, t=30, b=10),
+    margin=dict(l=10, r=65, t=30, b=10),
 )
 
 
@@ -577,24 +770,28 @@ def _parse_feed(query: str, limit: int) -> list[dict]:
     feed = feedparser.parse(url)
     rows = []
     for entry in feed.entries[:limit]:
-        title   = entry.get("title", "").strip()
-        link    = entry.get("link", "")
+        title = entry.get("title", "").strip()
+        link = entry.get("link", "")
         pub_str = entry.get("published", "")
         summary = re.sub(r"<[^>]+>", "", entry.get("summary", ""))
         if not title:
             continue
         pub_parsed = entry.get("published_parsed")
         try:
-            pub_dt = datetime(*pub_parsed[:6], tzinfo=timezone.utc) if pub_parsed else None
+            pub_dt = (
+                datetime(*pub_parsed[:6], tzinfo=timezone.utc) if pub_parsed else None
+            )
         except Exception:
             pub_dt = None
-        rows.append({
-            "Title":       title,
-            "Link":        link,
-            "Published":   pub_str,
-            "PublishedDt": pub_dt,
-            "Summary":     summary[:300],
-        })
+        rows.append(
+            {
+                "Title": title,
+                "Link": link,
+                "Published": pub_str,
+                "PublishedDt": pub_dt,
+                "Summary": summary[:300],
+            }
+        )
     return rows
 
 
@@ -621,22 +818,34 @@ def fetch_brand_feed(selected_brands: tuple, date_range_days: int) -> tuple:
         for item in _parse_feed(query, limit=15):
             summary_short = (
                 item["Summary"][:220] + "…"
-                if len(item["Summary"]) > 220 else item["Summary"]
+                if len(item["Summary"]) > 220
+                else item["Summary"]
             )
-            rows.append({
-                "Brand":       brand,
-                "Title":       item["Title"],
-                "Link":        item["Link"],
-                "Published":   item["Published"],
-                "PublishedDt": item["PublishedDt"],
-                "Summary":     summary_short,
-                "Category":    categorize(item["Title"] + " " + item["Summary"]),
-            })
+            rows.append(
+                {
+                    "Brand": brand,
+                    "Title": item["Title"],
+                    "Link": item["Link"],
+                    "Published": item["Published"],
+                    "PublishedDt": item["PublishedDt"],
+                    "Summary": summary_short,
+                    "Category": categorize(item["Title"] + " " + item["Summary"]),
+                }
+            )
     fetched_at = _now_ist_str()
     if not rows:
         return (
-            pd.DataFrame(columns=["Brand", "Title", "Link", "Published",
-                                   "PublishedDt", "Summary", "Category"]),
+            pd.DataFrame(
+                columns=[
+                    "Brand",
+                    "Title",
+                    "Link",
+                    "Published",
+                    "PublishedDt",
+                    "Summary",
+                    "Category",
+                ]
+            ),
             fetched_at,
         )
     df = pd.DataFrame(rows)
@@ -685,36 +894,17 @@ def fetch_market_pool(selected_brands: tuple, date_range_days: int) -> pd.DataFr
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
-    # Language toggle — topmost
-    st.markdown(
-        f'<div class="sb-section">{S["lang_label"]}</div>',
-        unsafe_allow_html=True,
-    )
-    lang_options = ["한국어", "English"]
-    lang_index   = 0 if lang == "ko" else 1
-    lang_choice  = st.selectbox(
-        label="lang_select",
-        options=lang_options,
-        index=lang_index,
-        label_visibility="collapsed",
-        key="_lang_select",
-    )
-    new_lang = "ko" if lang_choice == "한국어" else "en"
-    if new_lang != lang:
-        st.session_state["lang"] = new_lang
-        st.rerun()
-
-    st.markdown("---")
-
     # Date range — persist across reruns
     st.markdown(
         f'<div class="sb-section">{S["date_label"]}</div>',
         unsafe_allow_html=True,
     )
+
     date_opts = {S["d_1"]: 1, S["d_7"]: 7, S["d_30"]: 30}
     _days_to_label = {v: k for k, v in date_opts.items()}
-    _cur_label     = _days_to_label.get(st.session_state["date_range_days"], S["d_7"])
-    _cur_idx       = list(date_opts.keys()).index(_cur_label)
+    _cur_label = _days_to_label.get(st.session_state["date_range_days"], S["d_7"])
+    _cur_idx = list(date_opts.keys()).index(_cur_label)
+
     selected_range_label = st.selectbox(
         label="date_range",
         options=list(date_opts.keys()),
@@ -722,6 +912,7 @@ with st.sidebar:
         label_visibility="collapsed",
         key="_date_range",
     )
+
     date_range_days = date_opts[selected_range_label]
     st.session_state["date_range_days"] = date_range_days
 
@@ -732,6 +923,7 @@ with st.sidebar:
         f'<div class="sb-section">{S["brand_label"]}</div>',
         unsafe_allow_html=True,
     )
+
     selected_brands = st.multiselect(
         label="brands",
         options=list(BRAND_QUERIES.keys()),
@@ -747,7 +939,9 @@ with st.sidebar:
         f'<div class="sb-section">{S["signal_label"]}</div>',
         unsafe_allow_html=True,
     )
-    all_cats     = [S["all"]] + list(CATEGORIES.keys()) + ["Other"]
+
+    all_cats = [S["all"]] + list(CATEGORIES.keys()) + ["Other"]
+
     selected_cat = st.selectbox(
         label="signal_type",
         options=all_cats,
@@ -760,12 +954,25 @@ with st.sidebar:
     if st.button(S["refresh"], use_container_width=True):
         st.cache_data.clear()
         st.rerun()
+
     st.markdown(
         f'<div class="sb-note">{html.escape(S["refresh_note"])}</div>',
         unsafe_allow_html=True,
     )
 
 
+# Emergency fallback: make sure filter variables exist
+if "selected_brands" not in locals():
+    selected_brands = list(BRAND_QUERIES.keys())
+
+if "date_range_days" not in locals():
+    date_range_days = st.session_state.get("date_range_days", 7)
+
+if "selected_range_label" not in locals():
+    selected_range_label = S["d_7"]
+
+if "selected_cat" not in locals():
+    selected_cat = S["all"]
 # ── Validate selection ────────────────────────────────────────────────────────
 if not selected_brands:
     st.warning(S["warn_select"])
@@ -788,57 +995,52 @@ if df_brand.empty and df_pool.empty:
 
 # Category filter
 df_filtered = df_brand.copy()
-is_all_cats = (selected_cat == S["all"])
+is_all_cats = selected_cat == S["all"]
 if not is_all_cats:
     df_filtered = df_filtered[df_filtered["Category"] == selected_cat]
 
 # Latest article freshness
 pub_dates = df_brand["PublishedDt"].dropna().tolist() if not df_brand.empty else []
 latest_dt = max(pub_dates) if pub_dates else None
-now_utc   = datetime.now(tz=timezone.utc)
+now_utc = datetime.now(tz=timezone.utc)
 
 if latest_dt:
     latest_ist_str = latest_dt.astimezone(IST).strftime("%Y-%m-%d %H:%M IST")
-    days_stale     = (now_utc - latest_dt).total_seconds() / 86400
+    days_stale = (now_utc - latest_dt).total_seconds() / 86400
 else:
     latest_ist_str = "—"
-    days_stale     = None
+    days_stale = None
 
-stale_flag  = days_stale is not None and days_stale > 3
+stale_flag = days_stale is not None and days_stale > 3
 stale_class = "ph-stale" if stale_flag else ""
-
 # ── Render header (now data is loaded) ───────────────────────────────────────
-header_ph.markdown(
+header_html = f"""
+<div class="page-header">
+    <div class="ph-eyebrow">{html.escape(S["eyebrow"])}</div>
+    <div class="ph-title">{html.escape(S["page_title"])}</div>
+    <div class="ph-sub">{html.escape(S["page_sub"])}</div>
+    <div class="ph-built">{html.escape(S["built_by"])}</div>
+</div>
+"""
+
+header_ph.markdown(header_html, unsafe_allow_html=True)
+
+st.markdown(
     f"""
-    <div class="page-header">
-        <div class="ph-title">{html.escape(S["page_title"])}</div>
-        <div class="ph-sub">{html.escape(S["page_sub"])}</div>
-        <div class="ph-meta">
-            <div class="ph-meta-item">
-                <span class="ph-meta-label">{html.escape(S["last_updated"])}</span>
-                <span class="ph-meta-value">{html.escape(fetched_at_str)}</span>
-            </div>
-            <div class="ph-meta-item">
-                <span class="ph-meta-label">{html.escape(S["latest_article"])}</span>
-                <span class="ph-meta-value {stale_class}">{html.escape(latest_ist_str)}</span>
-            </div>
-            <div class="ph-meta-item">
-                <span class="ph-meta-label">{html.escape(S["period"])}</span>
-                <span class="ph-meta-value">{html.escape(selected_range_label)}</span>
-            </div>
-        </div>
+    <div class="meta-strip">
+        <span><b>{html.escape(S["last_updated"])}</b> · {html.escape(fetched_at_str)}</span>
+        <span><b>{html.escape(S["latest_article"])}</b> · {html.escape(latest_ist_str)}</span>
+        <span><b>{html.escape(S["period"])}</b> · {html.escape(selected_range_label)}</span>
     </div>
     """,
     unsafe_allow_html=True,
 )
-
 # ── KPI Cards ─────────────────────────────────────────────────────────────────
 total_articles = len(df_brand)
 brands_tracked = len(selected_brands)
-top_sov_brand  = df_pool.iloc[0]["Brand"] if not df_pool.empty else "—"
-top_signal     = (
-    df_filtered["Category"].value_counts().idxmax()
-    if not df_filtered.empty else "—"
+top_sov_brand = df_pool.iloc[0]["Brand"] if not df_pool.empty else "—"
+top_signal = (
+    df_filtered["Category"].value_counts().idxmax() if not df_filtered.empty else "—"
 )
 
 c1, c2, c3, c4 = st.columns(4)
@@ -849,7 +1051,7 @@ with c1:
         f'<div class="kpi-label">{S["kpi_articles"]}</div>'
         f'<div class="kpi-value">{total_articles}</div>'
         f'<div class="kpi-sub">{html.escape(S["kpi_articles_sub"])}</div>'
-        f'</div>',
+        f"</div>",
         unsafe_allow_html=True,
     )
 
@@ -859,7 +1061,7 @@ with c2:
         f'<div class="kpi-label">{S["kpi_brands"]}</div>'
         f'<div class="kpi-value">{brands_tracked}</div>'
         f'<div class="kpi-sub">{html.escape(S["kpi_brands_sub"])}</div>'
-        f'</div>',
+        f"</div>",
         unsafe_allow_html=True,
     )
 
@@ -869,7 +1071,7 @@ with c3:
         f'<div class="kpi-label">{S["kpi_top_brand"]}</div>'
         f'<div class="kpi-value-md">{html.escape(str(top_sov_brand))}</div>'
         f'<div class="kpi-sub">{html.escape(S["kpi_top_brand_sub"])}</div>'
-        f'</div>',
+        f"</div>",
         unsafe_allow_html=True,
     )
 
@@ -879,7 +1081,7 @@ with c4:
         f'<div class="kpi-label">{S["kpi_top_signal"]}</div>'
         f'<div class="kpi-value-md">{html.escape(str(top_signal))}</div>'
         f'<div class="kpi-sub">{html.escape(S["kpi_top_signal_sub"])}</div>'
-        f'</div>',
+        f"</div>",
         unsafe_allow_html=True,
     )
 
@@ -895,7 +1097,7 @@ with col_l:
         f'<div class="section-card">'
         f'<div class="sc-title">{html.escape(S["mentions_title"])}</div>'
         f'<div class="sc-cap">{html.escape(S["mentions_cap"])}</div>'
-        f'</div>',
+        f"</div>",
         unsafe_allow_html=True,
     )
     if df_pool.empty:
@@ -916,8 +1118,12 @@ with col_l:
             **PLOTLY_LAYOUT,
             height=360,
             yaxis=dict(title="", tickfont=dict(size=11)),
-            xaxis=dict(title=S["mentions_xaxis"], showgrid=True,
-                       gridcolor="#EEF4FA", zeroline=False),
+            xaxis=dict(
+                title=S["mentions_xaxis"],
+                showgrid=True,
+                gridcolor="#EEF4FA",
+                zeroline=False,
+            ),
             coloraxis_showscale=False,
         )
         st.plotly_chart(fig_bar, use_container_width=True)
@@ -927,14 +1133,14 @@ with col_r:
         f'<div class="section-card">'
         f'<div class="sc-title">{html.escape(S["sov_title"])}</div>'
         f'<div class="sc-cap">{html.escape(S["sov_cap"])}</div>'
-        f'</div>',
+        f"</div>",
         unsafe_allow_html=True,
     )
     if df_pool.empty:
         st.info(S["sov_empty"])
     else:
         sov_total = df_pool["Mentions"].sum()
-        df_sov    = df_pool.copy()
+        df_sov = df_pool.copy()
         df_sov["pct"] = (df_sov["Mentions"] / sov_total * 100).round(1)
         df_sov = df_sov.sort_values("pct", ascending=True)
 
@@ -952,8 +1158,9 @@ with col_r:
             **PLOTLY_LAYOUT,
             height=360,
             yaxis=dict(title="", tickfont=dict(size=11)),
-            xaxis=dict(title=S["sov_xaxis"], showgrid=True,
-                       gridcolor="#EEF4FA", zeroline=False),
+            xaxis=dict(
+                title=S["sov_xaxis"], showgrid=True, gridcolor="#EEF4FA", zeroline=False
+            ),
             coloraxis_showscale=False,
         )
         st.plotly_chart(fig_sov, use_container_width=True)
@@ -963,7 +1170,7 @@ st.markdown(
     f'<div class="section-card">'
     f'<div class="sc-title">{html.escape(S["signal_title"])}</div>'
     f'<div class="sc-cap">{html.escape(S["signal_cap"])}</div>'
-    f'</div>',
+    f"</div>",
     unsafe_allow_html=True,
 )
 
@@ -971,9 +1178,7 @@ if df_filtered.empty:
     st.info(S["signal_empty"])
 else:
     signal_df = (
-        df_filtered.groupby(["Brand", "Category"])
-        .size()
-        .reset_index(name="Count")
+        df_filtered.groupby(["Brand", "Category"]).size().reset_index(name="Count")
     )
     cat_order = list(CATEGORIES.keys()) + ["Other"]
 
@@ -990,11 +1195,15 @@ else:
         **PLOTLY_LAYOUT,
         height=340,
         xaxis=dict(title="", tickfont=dict(size=11)),
-        yaxis=dict(title=S["signal_yaxis"], showgrid=True,
-                   gridcolor="#EEF4FA", zeroline=False),
+        yaxis=dict(
+            title=S["signal_yaxis"], showgrid=True, gridcolor="#EEF4FA", zeroline=False
+        ),
         legend=dict(
-            orientation="h", yanchor="bottom", y=1.02,
-            xanchor="right", x=1,
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1,
             font=dict(size=11),
         ),
         bargap=0.3,
@@ -1006,7 +1215,7 @@ st.markdown(
     f'<div class="section-card">'
     f'<div class="sc-title">{html.escape(S["articles_title"])}</div>'
     f'<div class="sc-cap">{html.escape(S["articles_cap"])}</div>'
-    f'</div>',
+    f"</div>",
     unsafe_allow_html=True,
 )
 
@@ -1016,18 +1225,24 @@ else:
     disp = df_filtered[["Brand", "Category", "Published", "Title", "Link"]].copy()
 
     def safe_link(row) -> str:
-        raw_url    = str(row["Link"]).strip()
-        safe_url   = raw_url if re.match(r"^https?://", raw_url) else "#"
+        raw_url = str(row["Link"]).strip()
+        safe_url = raw_url if re.match(r"^https?://", raw_url) else "#"
         safe_title = html.escape(str(row["Title"]))
-        safe_href  = html.escape(safe_url, quote=True)
+        safe_href = html.escape(safe_url, quote=True)
         return f'<a href="{safe_href}" target="_blank" rel="noopener noreferrer">{safe_title}</a>'
 
     disp[S["col_article"]] = disp.apply(safe_link, axis=1)
-    disp = disp[[S["col_article"], "Brand", "Category", "Published"]].rename(columns={
-        "Brand":     S["col_brand"],
-        "Category":  S["col_type"],
-        "Published": S["col_date"],
-    }).reset_index(drop=True)
+    disp = (
+        disp[[S["col_article"], "Brand", "Category", "Published"]]
+        .rename(
+            columns={
+                "Brand": S["col_brand"],
+                "Category": S["col_type"],
+                "Published": S["col_date"],
+            }
+        )
+        .reset_index(drop=True)
+    )
 
     for col in (S["col_brand"], S["col_type"], S["col_date"]):
         if col in disp.columns:
@@ -1062,7 +1277,7 @@ with st.expander(S["dq_title"], expanded=False):
                 f'<div class="dq-lbl">{S["dq_feed"]}</div>'
                 f'<div class="dq-val">{total_articles}</div>'
                 f'<div class="dq-note">{pool_note}</div>'
-                f'</div>',
+                f"</div>",
                 unsafe_allow_html=True,
             )
 
@@ -1070,11 +1285,11 @@ with st.expander(S["dq_title"], expanded=False):
         other_count = (df_brand["Category"] == "Other").sum()
         other_ratio = other_count / len(df_brand) * 100
         if other_ratio >= 60:
-            r_cls, r_dot, r_msg = "st-bad",  "●", S["dq_bad"]
+            r_cls, r_dot, r_msg = "st-bad", "●", S["dq_bad"]
         elif other_ratio >= 35:
             r_cls, r_dot, r_msg = "st-warn", "●", S["dq_warn"]
         else:
-            r_cls, r_dot, r_msg = "st-ok",   "●", S["dq_ok"]
+            r_cls, r_dot, r_msg = "st-ok", "●", S["dq_ok"]
 
         with dq2:
             st.markdown(
@@ -1082,7 +1297,7 @@ with st.expander(S["dq_title"], expanded=False):
                 f'<div class="dq-lbl">{S["dq_other"]}</div>'
                 f'<div class="dq-val">{other_ratio:.0f}%</div>'
                 f'<div class="{r_cls}">{r_dot} {html.escape(r_msg)}</div>'
-                f'</div>',
+                f"</div>",
                 unsafe_allow_html=True,
             )
 
@@ -1090,20 +1305,24 @@ with st.expander(S["dq_title"], expanded=False):
         if days_stale is None:
             f_cls, f_dot, f_msg = "st-warn", "●", S["dq_unknown"]
         elif stale_flag:
-            f_cls, f_dot, f_msg = "st-bad",  "●", S["dq_stale_msg"].format(days=days_stale)
+            f_cls, f_dot, f_msg = (
+                "st-bad",
+                "●",
+                S["dq_stale_msg"].format(days=days_stale),
+            )
         else:
-            f_cls, f_dot, f_msg = "st-ok",   "●", S["dq_fresh"]
+            f_cls, f_dot, f_msg = "st-ok", "●", S["dq_fresh"]
 
         with dq3:
             st.markdown(
                 f'<div class="dq-box">'
                 f'<div class="dq-lbl">{S["dq_freshness"]}</div>'
                 f'<div class="dq-val" style="font-size:1rem;margin-top:0.1rem;">'
-                f'{html.escape(latest_ist_str)}</div>'
+                f"{html.escape(latest_ist_str)}</div>"
                 f'<div class="dq-note">{html.escape(S["dq_fetched"])}: '
-                f'{html.escape(fetched_at_str)}</div>'
+                f"{html.escape(fetched_at_str)}</div>"
                 f'<div class="{f_cls}">{f_dot} {html.escape(f_msg)}</div>'
-                f'</div>',
+                f"</div>",
                 unsafe_allow_html=True,
             )
     else:
