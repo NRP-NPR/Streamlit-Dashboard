@@ -2,14 +2,16 @@ import streamlit as st
 import feedparser
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go
 import urllib.parse
 import html
 import re
+from datetime import datetime, timezone, timedelta
 
-# ── Page config ─────────────────────────────────────────────────────────────
+IST = timezone(timedelta(hours=5, minutes=30))
+
+# ── Page config ──────────────────────────────────────────────────────────────
 st.set_page_config(
-    page_title="India Auto Competitor Intelligence Dashboard",
+    page_title="인도 자동차 경쟁사 동향 대시보드",
     page_icon="🚗",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -28,82 +30,92 @@ st.markdown(
 
     .dashboard-header {
         background: linear-gradient(135deg, #002C5F 0%, #007FA8 100%);
-        padding: 1.25rem 2rem;
+        padding: 1.1rem 2rem;
         border-radius: 10px;
-        margin-bottom: 1rem;
+        margin-bottom: 0.75rem;
         color: #FFFFFF;
     }
-    .dashboard-header h1 { margin: 0; font-size: 1.6rem; font-weight: 700; letter-spacing: 0.02em; }
-    .dashboard-header p  { margin: 0.25rem 0 0; font-size: 0.88rem; opacity: 0.8; }
+    .dashboard-header h1 { margin: 0; font-size: 1.5rem; font-weight: 700; letter-spacing: 0.01em; }
+    .dashboard-header p  { margin: 0.2rem 0 0; font-size: 0.85rem; opacity: 0.8; }
 
-    /* All KPI cards share a fixed height so the row is perfectly uniform */
-    .kpi-row { display: flex; gap: 0; }
+    /* Freshness info bar */
+    .freshness-bar {
+        background: #FFFFFF;
+        border: 1px solid #D8E8F4;
+        border-radius: 8px;
+        padding: 0.55rem 1.25rem;
+        margin-bottom: 0.85rem;
+        display: flex;
+        gap: 2.5rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    .freshness-item { display: flex; flex-direction: column; }
+    .freshness-label { font-size: 0.68rem; color: #8AAABE; font-weight: 600;
+                       text-transform: uppercase; letter-spacing: 0.06em; }
+    .freshness-value { font-size: 0.88rem; color: #002C5F; font-weight: 600; margin-top: 0.1rem; }
+    .freshness-stale  { color: #C53030; }
+
+    /* KPI cards — uniform height via flexbox */
     .kpi-card {
         background: #FFFFFF;
         border-radius: 10px;
-        padding: 1.1rem 1.4rem;
+        padding: 1.05rem 1.3rem;
         border-left: 4px solid #007FA8;
         box-shadow: 0 1px 6px rgba(0,44,95,0.07);
-        /* Fixed height forces uniformity regardless of value length */
-        min-height: 110px;
+        min-height: 108px;
         display: flex;
         flex-direction: column;
         justify-content: flex-start;
     }
-    .kpi-label { font-size: 0.72rem; color: #7A90A8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 0.3rem; }
-    .kpi-value { font-size: 1.9rem; color: #002C5F; font-weight: 800; line-height: 1.1; }
-    .kpi-value-md { font-size: 1.35rem; color: #002C5F; font-weight: 800; line-height: 1.2; margin-top: 0.05rem; }
-    .kpi-sub   { font-size: 0.75rem; color: #8AAABE; margin-top: 0.3rem; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .kpi-label   { font-size: 0.69rem; color: #7A90A8; font-weight: 600;
+                   text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 0.25rem; }
+    .kpi-value   { font-size: 1.85rem; color: #002C5F; font-weight: 800; line-height: 1.1; }
+    .kpi-value-md{ font-size: 1.25rem; color: #002C5F; font-weight: 800;
+                   line-height: 1.2; margin-top: 0.05rem; }
+    .kpi-sub     { font-size: 0.72rem; color: #8AAABE; margin-top: 0.28rem;
+                   font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
+    /* Section headings + captions */
     .section-heading {
-        font-size: 1.05rem;
+        font-size: 1rem;
         font-weight: 700;
         color: #002C5F;
         border-bottom: 2px solid #007FA8;
-        padding-bottom: 0.35rem;
-        margin-bottom: 1rem;
+        padding-bottom: 0.3rem;
+        margin-bottom: 0.5rem;
     }
-
-    .methodology-note {
-        background: #E8F4FA;
-        border-left: 4px solid #007FA8;
-        border-radius: 6px;
-        padding: 0.65rem 1.1rem;
-        font-size: 0.81rem;
-        color: #2C5282;
-        margin-bottom: 1rem;
-        line-height: 1.5;
-    }
-
-    /* Subtle explanatory captions under section headings */
     .section-caption {
-        font-size: 0.78rem;
+        font-size: 0.76rem;
         color: #8A9BB0;
-        margin-top: -0.6rem;
-        margin-bottom: 0.9rem;
+        margin-top: -0.3rem;
+        margin-bottom: 0.85rem;
         line-height: 1.45;
     }
 
-    /* KPI tooltip line */
-    .kpi-tip {
-        font-size: 0.74rem;
-        color: #9BAFC4;
-        margin-top: 0.4rem;
-        line-height: 1.4;
-        font-style: italic;
-    }
-
-    /* Data quality check box */
+    /* Data quality boxes */
     .dq-box {
         background: #FAFCFF;
         border: 1px solid #D4E4F0;
         border-radius: 8px;
-        padding: 1rem 1.25rem;
+        padding: 0.85rem 1.1rem;
         margin-bottom: 0.5rem;
     }
     .dq-ok   { color: #276749; font-weight: 600; }
     .dq-warn { color: #B7791F; font-weight: 600; }
     .dq-bad  { color: #C53030; font-weight: 600; }
+
+    /* Stale data warning banner */
+    .stale-banner {
+        background: #FFF5F5;
+        border-left: 4px solid #C53030;
+        border-radius: 6px;
+        padding: 0.6rem 1rem;
+        font-size: 0.82rem;
+        color: #C53030;
+        font-weight: 500;
+        margin-top: 0.5rem;
+    }
 
     a { color: #007FA8 !important; text-decoration: none; }
     a:hover { text-decoration: underline; }
@@ -112,13 +124,13 @@ st.markdown(
         background: #E8F1FA;
         border-left: 4px solid #007FA8;
         border-radius: 6px;
-        padding: 0.75rem 1.25rem;
-        font-size: 0.82rem;
+        padding: 0.65rem 1.1rem;
+        font-size: 0.8rem;
         color: #5A7290;
         margin-top: 1rem;
     }
 
-    .block-container { padding-top: 1rem !important; }
+    .block-container { padding-top: 0.75rem !important; }
     .stDataFrame { border-radius: 8px; overflow: hidden; }
     </style>
     """,
@@ -127,7 +139,6 @@ st.markdown(
 
 # ── Constants ────────────────────────────────────────────────────────────────
 
-# Brand-specific RSS query strings (for the Brand News Feed)
 BRAND_QUERIES = {
     "Tata Motors":      "Tata Motors India car",
     "Mahindra":         "Mahindra car India",
@@ -141,27 +152,20 @@ BRAND_QUERIES = {
     "Renault India":    "Renault India",
 }
 
-# Keyword sets for detecting brand mentions in free text.
-# Patterns are matched case-insensitively against (title + summary).
-# Prefer compound model names over bare single-word tokens to reduce false positives.
 BRAND_KEYWORDS = {
     "Tata Motors":      [
         "tata motors", "tata nexon", "tata harrier", "tata safari",
         "tata punch", "tata altroz", "tata curvv", "tata tigor",
-        "tata tiago", "tata ev", r"\btata\.ev\b",
-        # bare "tata" only after compound patterns fail; keep as fallback
-        r"\btata\b",
+        "tata tiago", "tata ev", r"\btata\b",
     ],
     "Mahindra":         [
         "mahindra", r"\bm&m\b",
-        # XUV prefix without closing boundary catches XUV700/XUV400/XUV3XO/XUV9e
         r"\bxuv\d*\b", r"\bxuv3xo\b", r"\bxev\b",
         r"\bscorpio\b", r"\bthar\b", r"\bbolero\b",
         r"\bbe\.6\b", r"\bbe6\b",
     ],
     "Maruti Suzuki":    [
         "maruti suzuki", r"\bmaruti\b",
-        # avoid bare "suzuki" — matches Suzuki motorcycles (not India cars)
         "suzuki india", "suzuki cars",
         "grand vitara", r"\bbrezza\b", r"\bswift\b",
         r"\bbaleno\b", r"\bdzire\b", r"\bfronx\b",
@@ -169,9 +173,7 @@ BRAND_KEYWORDS = {
     ],
     "Kia India":        [
         r"\bkia\b", r"\bseltos\b", r"\bsonet\b",
-        r"\bcarens\b", r"\bsyros\b",
-        # EV model numbers are Kia-specific enough in India auto context
-        r"\bev6\b", r"\bev9\b",
+        r"\bcarens\b", r"\bsyros\b", r"\bev6\b", r"\bev9\b",
     ],
     "Toyota India":     [
         r"\btoyota\b", "innova crysta", "innova hycross",
@@ -179,24 +181,20 @@ BRAND_KEYWORDS = {
         r"\bcamry\b", r"\bglanza\b",
     ],
     "MG Motor India":   [
-        # Always anchor as "mg motor" or "mg <model>" — bare "mg" too short/ambiguous
         "mg motor", r"\bmg hector\b", r"\bmg astor\b",
         r"\bmg windsor\b", r"\bmg comet\b", r"\bmg zs\b",
         r"\bmg gloster\b", r"\bmg india\b",
     ],
     "Honda Cars India": [
-        # bare "honda" is reasonably brand-specific in India auto context
         r"\bhonda\b", "honda city", "honda amaze",
         "honda elevate", r"\bwr-v\b",
     ],
     "Skoda India":      [
-        r"\bskoda\b", r"\bkushaq\b", r"\bslavia\b",
-        r"\bkodiaq\b",
+        r"\bskoda\b", r"\bkushaq\b", r"\bslavia\b", r"\bkodiaq\b",
     ],
     "Volkswagen India": [
-        r"\bvolkswagen\b",
-        # bare "vw" is fine in India auto news; add explicit India context as fallback
-        r"\bvw\b", r"\btaigun\b", r"\bvirtus\b", r"\btiguan\b",
+        r"\bvolkswagen\b", r"\bvw\b", r"\btaigun\b",
+        r"\bvirtus\b", r"\btiguan\b",
     ],
     "Renault India":    [
         r"\brenault\b", r"\bkiger\b", r"\btriber\b",
@@ -204,7 +202,6 @@ BRAND_KEYWORDS = {
     ],
 }
 
-# Broad market pool queries (for Share of Voice)
 MARKET_POOL_QUERIES = [
     "India auto industry passenger vehicle EV launch investment",
     "India car market Tata Mahindra Maruti Kia Toyota MG",
@@ -224,11 +221,6 @@ CATEGORIES = {
                    "subsidy", "tax"],
 }
 
-BRAND_COLORS = [
-    "#002C5F", "#007FA8", "#1E6B9A", "#2E86C1", "#3498DB",
-    "#5DADE2", "#7FB3D3", "#A9CCE3", "#6A89A7", "#4A7FA5",
-]
-
 PLOTLY_LAYOUT = dict(
     paper_bgcolor="rgba(0,0,0,0)",
     plot_bgcolor="rgba(0,0,0,0)",
@@ -238,6 +230,7 @@ PLOTLY_LAYOUT = dict(
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
+
 def categorize(text: str) -> str:
     t = text.lower()
     for cat, kws in CATEGORIES.items():
@@ -247,7 +240,7 @@ def categorize(text: str) -> str:
 
 
 def _parse_feed(query: str, limit: int) -> list[dict]:
-    """Fetch and parse a Google News RSS feed for the given query string."""
+    """Fetch and parse a Google News RSS feed. Returns items with PublishedDt (UTC datetime)."""
     url = (
         "https://news.google.com/rss/search?"
         f"q={urllib.parse.quote(query)}&hl=en-IN&gl=IN&ceid=IN:en"
@@ -257,21 +250,27 @@ def _parse_feed(query: str, limit: int) -> list[dict]:
     for entry in feed.entries[:limit]:
         title   = entry.get("title", "").strip()
         link    = entry.get("link", "")
-        pub     = entry.get("published", "")
+        pub_str = entry.get("published", "")
         summary = re.sub(r"<[^>]+>", "", entry.get("summary", ""))
         if not title:
             continue
+        # Parse publish date → UTC datetime
+        pub_parsed = entry.get("published_parsed")
+        try:
+            pub_dt = datetime(*pub_parsed[:6], tzinfo=timezone.utc) if pub_parsed else None
+        except Exception:
+            pub_dt = None
         rows.append({
-            "Title":     title,
-            "Link":      link,
-            "Published": pub,
-            "Summary":   summary[:300],
+            "Title":       title,
+            "Link":        link,
+            "Published":   pub_str,
+            "PublishedDt": pub_dt,
+            "Summary":     summary[:300],
         })
     return rows
 
 
 def _mentions_brand(text: str, brand: str) -> bool:
-    """Return True if any keyword for the brand matches in the given text."""
     t = text.lower()
     for kw in BRAND_KEYWORDS[brand]:
         if re.search(kw, t):
@@ -279,53 +278,63 @@ def _mentions_brand(text: str, brand: str) -> bool:
     return False
 
 
+def _now_ist_str() -> str:
+    return datetime.now(tz=timezone.utc).astimezone(IST).strftime("%Y-%m-%d %H:%M IST")
+
+
 # ── Data fetchers (separately cached) ────────────────────────────────────────
 
 @st.cache_data(ttl=3600, show_spinner=False)
-def fetch_brand_feed(selected_brands: tuple) -> pd.DataFrame:
+def fetch_brand_feed(selected_brands: tuple, date_range_days: int) -> tuple:
     """
-    A. Brand News Feed — brand-specific RSS queries.
-    Used for Recent Articles and Strategic Signals charts.
-    Limits 15 articles per brand to keep the table manageable.
+    A. Brand News Feed — brand-specific RSS queries with when:Xd date filter.
+    Returns (df, fetched_at_ist_str).
     """
+    when_suffix = f" when:{date_range_days}d"
     rows = []
     for brand in selected_brands:
-        query = BRAND_QUERIES[brand]
+        query = BRAND_QUERIES[brand] + when_suffix
         for item in _parse_feed(query, limit=15):
             summary_short = (
                 item["Summary"][:220] + "…"
                 if len(item["Summary"]) > 220 else item["Summary"]
             )
             rows.append({
-                "Brand":     brand,
-                "Title":     item["Title"],
-                "Link":      item["Link"],
-                "Published": item["Published"],
-                "Summary":   summary_short,
-                "Category":  categorize(item["Title"] + " " + item["Summary"]),
+                "Brand":       brand,
+                "Title":       item["Title"],
+                "Link":        item["Link"],
+                "Published":   item["Published"],
+                "PublishedDt": item["PublishedDt"],
+                "Summary":     summary_short,
+                "Category":    categorize(item["Title"] + " " + item["Summary"]),
             })
 
+    fetched_at = _now_ist_str()
+
     if not rows:
-        return pd.DataFrame(
-            columns=["Brand", "Title", "Link", "Published", "Summary", "Category"]
+        return (
+            pd.DataFrame(columns=["Brand", "Title", "Link", "Published",
+                                   "PublishedDt", "Summary", "Category"]),
+            fetched_at,
         )
 
     df = pd.DataFrame(rows)
     df = df.drop_duplicates(subset=["Title", "Brand"])
-    return df
+    return (df, fetched_at)
 
 
 @st.cache_data(ttl=3600, show_spinner=False)
-def _fetch_raw_pool() -> list[dict]:
+def _fetch_raw_pool(date_range_days: int) -> tuple:
     """
-    Fetch and deduplicate the broad market news pool.
-    Cached independently of brand selection so re-filtering brands
-    doesn't trigger a fresh network fetch.
+    Fetch and deduplicate the broad market news pool with when:Xd filter.
+    Returns (unique_items, raw_count, fetched_at_ist_str).
     """
+    when_suffix = f" when:{date_range_days}d"
     all_items: list[dict] = []
     for query in MARKET_POOL_QUERIES:
-        all_items.extend(_parse_feed(query, limit=50))
+        all_items.extend(_parse_feed(query + when_suffix, limit=50))
 
+    raw_count = len(all_items)
     seen: set[tuple] = set()
     unique_items: list[dict] = []
     for item in all_items:
@@ -333,16 +342,15 @@ def _fetch_raw_pool() -> list[dict]:
         if key not in seen:
             seen.add(key)
             unique_items.append(item)
-    return unique_items
+
+    return (unique_items, raw_count, _now_ist_str())
 
 
-def fetch_market_pool(selected_brands: tuple) -> pd.DataFrame:
+def fetch_market_pool(selected_brands: tuple, date_range_days: int) -> pd.DataFrame:
     """
-    B. Market News Pool — count brand mentions in the deduplicated pool.
-    Uses _fetch_raw_pool() for network fetching (cached); mention counting
-    is a fast in-memory step that naturally adapts to brand selection.
+    B. Count brand mentions in the deduplicated market pool.
     """
-    unique_items = _fetch_raw_pool()
+    unique_items, _, _ = _fetch_raw_pool(date_range_days)
 
     if not unique_items:
         return pd.DataFrame(columns=["Brand", "Mentions"])
@@ -359,37 +367,45 @@ def fetch_market_pool(selected_brands: tuple) -> pd.DataFrame:
         for brand, count in mention_counts.items()
         if count > 0
     ]
-
     if not rows:
         return pd.DataFrame(columns=["Brand", "Mentions"])
-
     return pd.DataFrame(rows).sort_values("Mentions", ascending=False)
 
 
 # ── Sidebar ──────────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.markdown("## ⚙️ Filters")
+    st.markdown("## ⚙️ 필터")
+    st.markdown("---")
+
+    date_range_options = {"최근 1일": 1, "최근 7일": 7, "최근 30일": 30}
+    selected_range_label = st.selectbox(
+        "수집 기간",
+        options=list(date_range_options.keys()),
+        index=1,          # default: 최근 7일
+    )
+    date_range_days = date_range_options[selected_range_label]
+
     st.markdown("---")
 
     selected_brands = st.multiselect(
-        "Select Competitors",
+        "경쟁사 선택",
         options=list(BRAND_QUERIES.keys()),
         default=list(BRAND_QUERIES.keys()),
     )
 
-    all_cats = ["All"] + list(CATEGORIES.keys()) + ["Other"]
-    selected_cat = st.selectbox("Filter by Category", all_cats)
+    all_cats = ["전체"] + list(CATEGORIES.keys()) + ["Other"]
+    selected_cat = st.selectbox("신호 유형 필터", all_cats)
 
     st.markdown("---")
-    refresh = st.button("🔄 Refresh Data", use_container_width=True)
+    refresh = st.button("🔄 데이터 새로고침", use_container_width=True)
     if refresh:
         st.cache_data.clear()
         st.rerun()
 
     st.markdown("---")
     st.markdown(
-        "<small style='opacity:0.6;'>Data refreshes automatically every hour.<br>"
-        "Click Refresh to fetch latest news immediately.</small>",
+        "<small style='opacity:0.6;'>데이터는 1시간마다 자동 갱신됩니다.<br>"
+        "즉시 갱신하려면 위 버튼을 누르세요.</small>",
         unsafe_allow_html=True,
     )
 
@@ -398,39 +414,71 @@ with st.sidebar:
 st.markdown(
     """
     <div class="dashboard-header">
-        <h1>🚗 India Auto Competitor Intelligence Dashboard</h1>
-        <p>Real-time media signal monitoring for India's automotive market</p>
+        <h1>🚗 인도 자동차 경쟁사 동향 대시보드</h1>
+        <p>인도 자동차 시장의 경쟁사 뉴스, 미디어 노출, 전략 신호를 모니터링하는 대시보드</p>
     </div>
     """,
     unsafe_allow_html=True,
 )
 
 if not selected_brands:
-    st.warning("Please select at least one competitor from the sidebar.")
+    st.warning("최소 1개 이상의 경쟁사를 선택하세요.")
     st.stop()
 
 # ── Data load ────────────────────────────────────────────────────────────────
 brands_tuple = tuple(selected_brands)
 
-with st.spinner("Fetching brand news feeds and market pool…"):
-    df_brand = fetch_brand_feed(brands_tuple)
-    df_pool  = fetch_market_pool(brands_tuple)
+with st.spinner("브랜드 뉴스 피드와 시장 풀을 수집하는 중…"):
+    df_brand, fetched_at_str = fetch_brand_feed(brands_tuple, date_range_days)
+    pool_items, pool_raw_count, _ = _fetch_raw_pool(date_range_days)
+    df_pool = fetch_market_pool(brands_tuple, date_range_days)
 
 if df_brand.empty and df_pool.empty:
-    st.error("No articles found. This may be a temporary network issue. Try refreshing.")
+    st.error("기사를 찾을 수 없습니다. 일시적인 네트워크 오류일 수 있습니다. 새로고침을 시도하세요.")
     st.stop()
 
-# Apply category filter to brand feed (used for articles table + signals chart)
+# Category filter
 df_filtered = df_brand.copy()
-if selected_cat != "All":
+if selected_cat != "전체":
     df_filtered = df_filtered[df_filtered["Category"] == selected_cat]
+
+# Latest article datetime
+pub_dates = df_brand["PublishedDt"].dropna().tolist() if not df_brand.empty else []
+latest_dt = max(pub_dates) if pub_dates else None
+now_utc   = datetime.now(tz=timezone.utc)
+
+if latest_dt:
+    latest_ist_str = latest_dt.astimezone(IST).strftime("%Y-%m-%d %H:%M IST")
+    days_stale     = (now_utc - latest_dt).total_seconds() / 86400
+else:
+    latest_ist_str = "—"
+    days_stale     = None
+
+# ── Freshness bar ────────────────────────────────────────────────────────────
+stale_flag = days_stale is not None and days_stale > 3
+stale_class = "freshness-stale" if stale_flag else ""
+st.markdown(
+    f'<div class="freshness-bar">'
+    f'  <div class="freshness-item">'
+    f'    <span class="freshness-label">최종 업데이트 시각</span>'
+    f'    <span class="freshness-value">{html.escape(fetched_at_str)}</span>'
+    f'  </div>'
+    f'  <div class="freshness-item">'
+    f'    <span class="freshness-label">최신 기사 날짜</span>'
+    f'    <span class="freshness-value {stale_class}">{html.escape(latest_ist_str)}</span>'
+    f'  </div>'
+    f'  <div class="freshness-item">'
+    f'    <span class="freshness-label">데이터 수집 기준</span>'
+    f'    <span class="freshness-value">{html.escape(selected_range_label)}</span>'
+    f'  </div>'
+    f'</div>',
+    unsafe_allow_html=True,
+)
 
 # ── KPI Cards ────────────────────────────────────────────────────────────────
 total_brand_articles = len(df_brand)
 brands_tracked       = len(selected_brands)
-top_sov_brand        = (
-    df_pool.iloc[0]["Brand"] if not df_pool.empty else "—"
-)
+top_sov_brand        = df_pool.iloc[0]["Brand"] if not df_pool.empty else "—"
 top_signal = (
     df_filtered["Category"].value_counts().idxmax()
     if not df_filtered.empty else "—"
@@ -441,9 +489,9 @@ c1, c2, c3, c4 = st.columns(4)
 with c1:
     st.markdown(
         f'<div class="kpi-card">'
-        f'<div class="kpi-label">Brand Articles Collected</div>'
+        f'<div class="kpi-label">수집 기사 수</div>'
         f'<div class="kpi-value">{total_brand_articles}</div>'
-        f'<div class="kpi-sub">from brand-specific feeds</div>'
+        f'<div class="kpi-sub">브랜드별 RSS 피드 기준</div>'
         f'</div>',
         unsafe_allow_html=True,
     )
@@ -451,9 +499,9 @@ with c1:
 with c2:
     st.markdown(
         f'<div class="kpi-card">'
-        f'<div class="kpi-label">Competitors Tracked</div>'
+        f'<div class="kpi-label">추적 브랜드 수</div>'
         f'<div class="kpi-value">{brands_tracked}</div>'
-        f'<div class="kpi-sub">brands monitored</div>'
+        f'<div class="kpi-sub">선택된 경쟁사 수</div>'
         f'</div>',
         unsafe_allow_html=True,
     )
@@ -461,9 +509,9 @@ with c2:
 with c3:
     st.markdown(
         f'<div class="kpi-card">'
-        f'<div class="kpi-label">Top Mentioned Brand</div>'
+        f'<div class="kpi-label">최다 언급 브랜드</div>'
         f'<div class="kpi-value-md">{html.escape(str(top_sov_brand))}</div>'
-        f'<div class="kpi-sub">highest mentions in market pool</div>'
+        f'<div class="kpi-sub">시장 풀 기준 언급량</div>'
         f'</div>',
         unsafe_allow_html=True,
     )
@@ -471,45 +519,44 @@ with c3:
 with c4:
     st.markdown(
         f'<div class="kpi-card">'
-        f'<div class="kpi-label">Top Signal Type</div>'
+        f'<div class="kpi-label">주요 전략 신호</div>'
         f'<div class="kpi-value-md">{html.escape(str(top_signal))}</div>'
-        f'<div class="kpi-sub">dominant category</div>'
+        f'<div class="kpi-sub">가장 많이 나타난 신호 유형</div>'
         f'</div>',
         unsafe_allow_html=True,
     )
 
-# ── How to read this dashboard ───────────────────────────────────────────────
-with st.expander("ℹ️ How to read this dashboard", expanded=False):
+# ── 대시보드 해석 가이드 ─────────────────────────────────────────────────────
+with st.expander("ℹ️ 대시보드 해석 가이드", expanded=False):
     st.markdown(
         """
-| Metric | What it shows |
+| 항목 | 설명 |
 |---|---|
-| **Brand Articles Collected** | Total articles fetched from brand-specific Google News RSS feeds (up to 15 per brand). Drives the Recent Articles table and Strategic Signals chart. |
-| **Competitors Tracked** | Number of brands currently selected in the sidebar filter. |
-| **Top Mentioned Brand** | The competitor with the highest number of mentions in the common market news pool — not from brand-specific feeds. Indicates strongest media visibility during the period. |
-| **Top Signal Type** | The most frequent strategic category (EV, Launch, Investment, Price, etc.) found across the brand-specific articles in the current filter. |
-| **News Mentions by Brand** | How often each competitor appears in the broader India auto market news pool. Based on keyword detection across deduplicated articles from 3 broad market queries. Reflects relative media presence, not sales or market share. |
-| **Share of Voice** | Each brand's percentage of total mentions in the market news pool. Calculated from news mentions only — not vehicle sales or revenue. |
-| **Strategic Signals by Brand** | Brand-specific articles classified by theme (EV, Hybrid, Investment, Launch, Price, Export, Policy). Shows what each competitor is publicly communicating about. |
-| **Recent Articles** | Original articles from brand-specific RSS feeds. Click any title to read the source. Use this to verify whether a signal is genuine. |
-| **Data Quality Check** | Flags potential reliability issues: a high "Other" ratio means keyword coverage may be incomplete; identical brand counts may indicate artificial sampling; low market pool coverage means few brands were detected in the broader news pool. |
+| **수집 기사 수** | 브랜드별 Google News RSS 피드에서 수집한 기사 수 (브랜드당 최대 15건). 최근 기사 목록 및 전략 신호 차트의 기반 데이터입니다. |
+| **추적 브랜드 수** | 사이드바에서 현재 선택된 경쟁사 수입니다. |
+| **최다 언급 브랜드** | 브랜드별 피드가 아닌 공통 시장 뉴스 풀에서 가장 많이 언급된 경쟁사입니다. 해당 기간 미디어 노출이 가장 높은 브랜드를 나타냅니다. |
+| **주요 전략 신호** | 수집된 기사에서 가장 많이 분류된 전략 테마입니다 (EV, Launch, Investment, Price 등). |
+| **브랜드별 뉴스 언급량** | 인도 자동차 시장 관련 3개의 광범위 쿼리로 수집된 기사 풀에서 각 브랜드가 언급된 횟수입니다. 판매량이나 시장 점유율과는 무관합니다. |
+| **뉴스 언급 점유율** | 시장 뉴스 풀 내 전체 브랜드 언급량 대비 각 브랜드의 비율입니다. 차량 판매 기준이 아닌 미디어 노출 기준입니다. |
+| **브랜드별 전략 신호** | 브랜드별 기사를 EV, 하이브리드, 투자, 출시, 가격, 수출, 정책 등 전략 테마로 분류한 누적 막대 차트입니다. |
+| **최근 기사 목록** | 브랜드별 RSS 피드에서 수집한 기사 목록입니다. 제목을 클릭하면 원문을 확인할 수 있습니다. |
+| **데이터 품질 점검** | 수집 데이터의 신뢰성을 점검합니다. '기타' 비율이 높거나 최신 기사 날짜가 오래된 경우 수집 품질 이슈를 의심해보세요. |
         """,
         unsafe_allow_html=False,
     )
 
-# ── Charts Row 1: Market pool-based ─────────────────────────────────────────
+# ── Charts Row 1: Market pool ────────────────────────────────────────────────
 col_left, col_right = st.columns([3, 2])
 
 with col_left:
     st.markdown(
-        '<div class="section-heading">📊 News Mentions by Brand</div>'
-        '<div class="section-caption">Shows how often each competitor is mentioned '
-        'in the collected India auto market news pool. This indicates relative media '
-        'visibility, not actual sales performance or market share.</div>',
+        '<div class="section-heading">📊 브랜드별 뉴스 언급량</div>'
+        '<div class="section-caption">인도 자동차 시장 광역 쿼리 풀에서 각 브랜드가 언급된 횟수입니다. '
+        '판매량·시장 점유율이 아닌 미디어 노출 지표입니다.</div>',
         unsafe_allow_html=True,
     )
     if df_pool.empty:
-        st.info("No brand mentions detected in the market news pool.")
+        st.info("시장 뉴스 풀에서 브랜드 언급이 감지되지 않았습니다.")
     else:
         pool_sorted = df_pool.sort_values("Mentions", ascending=True)
         fig_bar = px.bar(
@@ -526,58 +573,55 @@ with col_left:
             **PLOTLY_LAYOUT,
             height=360,
             yaxis=dict(title=""),
-            xaxis_title="Mentions in market news pool",
+            xaxis_title="언급 횟수 (시장 뉴스 풀 기준)",
             coloraxis_showscale=False,
         )
-        st.plotly_chart(fig_bar, use_container_width=True)  # noqa: STC-deprecated
+        st.plotly_chart(fig_bar, use_container_width=True)
 
 with col_right:
     st.markdown(
-        '<div class="section-heading">📢 Share of Voice</div>'
-        '<div class="section-caption">Each brand\'s percentage of total competitor '
-        'mentions in the collected news pool. A higher share means more media '
-        'attention during the selected period. '
-        '<em>Note: calculated from news mentions, not vehicle sales.</em></div>',
+        '<div class="section-heading">📢 뉴스 언급 점유율</div>'
+        '<div class="section-caption">시장 뉴스 풀 내 전체 언급량 대비 각 브랜드 비율입니다. '
+        '<em>차량 판매 기준이 아닌 미디어 언급 기준입니다.</em></div>',
         unsafe_allow_html=True,
     )
     if df_pool.empty:
-        st.info("No data available for Share of Voice.")
+        st.info("점유율 데이터를 사용할 수 없습니다.")
     else:
         sov_total = df_pool["Mentions"].sum()
         df_sov = df_pool.copy()
-        df_sov["Share (%)"] = (df_sov["Mentions"] / sov_total * 100).round(1)
-        df_sov = df_sov.sort_values("Share (%)", ascending=True)
+        df_sov["점유율 (%)"] = (df_sov["Mentions"] / sov_total * 100).round(1)
+        df_sov = df_sov.sort_values("점유율 (%)", ascending=True)
 
         fig_sov = px.bar(
             df_sov,
-            x="Share (%)",
+            x="점유율 (%)",
             y="Brand",
             orientation="h",
-            color="Share (%)",
+            color="점유율 (%)",
             color_continuous_scale=["#BFD9F0", "#007FA8", "#002C5F"],
-            text=df_sov["Share (%)"].apply(lambda v: f"{v:.1f}%"),
+            text=df_sov["점유율 (%)"].apply(lambda v: f"{v:.1f}%"),
         )
         fig_sov.update_traces(textposition="outside", marker_line_width=0)
         fig_sov.update_layout(
             **PLOTLY_LAYOUT,
             height=360,
             yaxis=dict(title=""),
-            xaxis_title="Share of Voice (%)",
+            xaxis_title="뉴스 언급 점유율 (%)",
             coloraxis_showscale=False,
         )
         st.plotly_chart(fig_sov, use_container_width=True)
 
-# ── Charts Row 2: Brand feed-based ──────────────────────────────────────────
+# ── Charts Row 2: Strategic signals ─────────────────────────────────────────
 st.markdown(
-    '<div class="section-heading">🎯 Strategic Signals by Brand</div>'
-    '<div class="section-caption">Classifies competitor news into strategic themes '
-    'such as EV, Hybrid, Investment, Launch, Price, Export, and Policy. '
-    'Helps identify what each competitor is currently focusing on.</div>',
+    '<div class="section-heading">🎯 브랜드별 전략 신호</div>'
+    '<div class="section-caption">경쟁사 기사를 EV, 하이브리드, 투자, 출시, 가격, 수출, 정책 등 '
+    '전략 테마로 분류합니다. 각 브랜드가 현재 어디에 집중하고 있는지 파악하는 데 활용하세요.</div>',
     unsafe_allow_html=True,
 )
 
 if df_filtered.empty:
-    st.info("No articles match the selected category filter.")
+    st.info("선택한 필터 조건에 맞는 기사가 없습니다.")
 else:
     signal_df = (
         df_filtered.groupby(["Brand", "Category"])
@@ -598,137 +642,127 @@ else:
         **PLOTLY_LAYOUT,
         height=360,
         xaxis_title="",
-        yaxis_title="Articles",
+        yaxis_title="기사 수",
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
     )
     st.plotly_chart(fig_signal, use_container_width=True)
 
 # ── Recent Articles Table ─────────────────────────────────────────────────────
 st.markdown(
-    '<div class="section-heading">📰 Recent Articles</div>'
-    '<div class="section-caption">Lists recent articles collected from brand-specific '
-    'RSS feeds. Use this section to check the original source behind each signal '
-    'and verify whether the article is relevant.</div>',
+    '<div class="section-heading">📰 최근 기사 목록</div>'
+    '<div class="section-caption">브랜드별 RSS 피드에서 수집한 최근 기사입니다. '
+    '제목을 클릭하면 원문을 확인할 수 있습니다. 기사 제목은 영어 원문 그대로 표시됩니다.</div>',
     unsafe_allow_html=True,
 )
 
 if df_filtered.empty:
-    st.info("No articles to display for the current filter selection.")
+    st.info("현재 필터 조건에 표시할 기사가 없습니다.")
 else:
     display_df = df_filtered[["Brand", "Category", "Title", "Published", "Link"]].copy()
 
     def safe_link(row) -> str:
-        raw_url  = str(row["Link"]).strip()
-        safe_url = raw_url if re.match(r"^https?://", raw_url) else "#"
+        raw_url    = str(row["Link"]).strip()
+        safe_url   = raw_url if re.match(r"^https?://", raw_url) else "#"
         safe_title = html.escape(str(row["Title"]))
         safe_href  = html.escape(safe_url, quote=True)
         return f'<a href="{safe_href}" target="_blank" rel="noopener noreferrer">{safe_title}</a>'
 
-    display_df["Article"] = display_df.apply(safe_link, axis=1)
-    display_df = display_df[["Brand", "Category", "Published", "Article"]].reset_index(drop=True)
+    display_df["기사"] = display_df.apply(safe_link, axis=1)
+    display_df = display_df[["Brand", "Category", "Published", "기사"]].rename(
+        columns={"Brand": "브랜드", "Category": "유형", "Published": "날짜"}
+    ).reset_index(drop=True)
 
-    # Escape all plain-text columns so untrusted RSS content cannot inject HTML.
-    # The "Article" column is already sanitised by safe_link(); leave it as-is.
-    for col in ("Brand", "Category", "Published"):
+    for col in ("브랜드", "유형", "날짜"):
         display_df[col] = display_df[col].apply(lambda v: html.escape(str(v)))
 
-    st.markdown(
-        display_df.to_html(escape=False, index=False),
-        unsafe_allow_html=True,
-    )
+    st.markdown(display_df.to_html(escape=False, index=False), unsafe_allow_html=True)
 
 # ── Data Quality Check ───────────────────────────────────────────────────────
-with st.expander("🔍 Data Quality Check", expanded=False):
-    st.markdown(
-        '<div class="section-caption" style="margin-top:0;">'
-        'Checks whether the collected data is reliable enough for interpretation. '
-        'A high "Other" ratio or identical article counts across brands may indicate '
-        'that the keyword logic or collection method needs improvement.'
-        '</div>',
-        unsafe_allow_html=True,
-    )
+with st.expander("🔍 데이터 품질 점검", expanded=False):
+    pool_dedup_count = len(pool_items)
+
+    # Stale article warning
+    if stale_flag:
+        st.markdown(
+            '<div class="stale-banner">⚠️ 최신 기사 날짜가 3일 이상 오래되었습니다. '
+            'RSS 수집 상태를 확인하세요.</div>',
+            unsafe_allow_html=True,
+        )
 
     if not df_brand.empty:
-        dq_cols = st.columns(3)
+        dq_r1, dq_r2, dq_r3 = st.columns(3)
 
-        # 1. Other-category ratio
-        other_count  = (df_brand["Category"] == "Other").sum()
-        other_ratio  = other_count / len(df_brand) * 100
+        # 1. Raw collected vs dedup (pool)
+        with dq_r1:
+            st.markdown(
+                f'<div class="dq-box">'
+                f'<div class="kpi-label">수집 기사 (브랜드 피드)</div>'
+                f'<div class="kpi-value" style="font-size:1.5rem;">{total_brand_articles}</div>'
+                f'<div style="font-size:0.76rem;color:#5A7290;margin-top:0.2rem;">'
+                f'시장 풀 원본: {pool_raw_count}건 → 중복 제거 후: {pool_dedup_count}건</div>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+
+        # 2. Other ratio
+        other_count = (df_brand["Category"] == "Other").sum()
+        other_ratio = other_count / len(df_brand) * 100
         if other_ratio >= 60:
-            dq_class, dq_icon = "dq-bad",  "🔴"
+            r_icon, r_class, r_msg = "🔴", "dq-bad",  "키워드 커버리지 부족 가능성"
         elif other_ratio >= 35:
-            dq_class, dq_icon = "dq-warn", "🟡"
+            r_icon, r_class, r_msg = "🟡", "dq-warn", "일부 기사 미분류"
         else:
-            dq_class, dq_icon = "dq-ok",   "🟢"
+            r_icon, r_class, r_msg = "🟢", "dq-ok",   "분류 상태 양호"
 
-        with dq_cols[0]:
+        with dq_r2:
             st.markdown(
                 f'<div class="dq-box">'
-                f'<div class="kpi-label">"Other" Category Ratio</div>'
-                f'<div class="kpi-value" style="font-size:1.6rem;">'
-                f'{dq_icon} {other_ratio:.0f}%</div>'
-                f'<div class="{dq_class}" style="font-size:0.78rem;margin-top:0.3rem;">'
-                f'{"High — keyword coverage may be incomplete" if other_ratio >= 60 else "Moderate — some articles uncategorised" if other_ratio >= 35 else "Good — most articles are categorised"}'
-                f'</div></div>',
+                f'<div class="kpi-label">기타 비율 (Other ratio)</div>'
+                f'<div class="kpi-value" style="font-size:1.5rem;">'
+                f'{r_icon} {other_ratio:.0f}%</div>'
+                f'<div class="{r_class}" style="font-size:0.76rem;margin-top:0.2rem;">'
+                f'{r_msg}</div>'
+                f'</div>',
                 unsafe_allow_html=True,
             )
 
-        # 2. Uniform brand counts check
-        brand_counts_dq = df_brand["Brand"].value_counts()
-        is_uniform      = brand_counts_dq.nunique() == 1 and len(brand_counts_dq) > 1
-        uniq_counts     = brand_counts_dq.nunique()
-
-        with dq_cols[1]:
-            u_icon  = "🟡" if is_uniform else "🟢"
-            u_class = "dq-warn" if is_uniform else "dq-ok"
-            u_label = "All brands identical — may indicate equal sampling cap" \
-                      if is_uniform else f"{uniq_counts} different count values — looks natural"
-            st.markdown(
-                f'<div class="dq-box">'
-                f'<div class="kpi-label">Brand Count Distribution</div>'
-                f'<div class="kpi-value" style="font-size:1.6rem;">'
-                f'{u_icon} {"Uniform" if is_uniform else "Varied"}</div>'
-                f'<div class="{u_class}" style="font-size:0.78rem;margin-top:0.3rem;">'
-                f'{u_label}'
-                f'</div></div>',
-                unsafe_allow_html=True,
-            )
-
-        # 3. Market pool size
-        pool_size      = len(_fetch_raw_pool())
-        pool_brands    = int(df_pool["Mentions"].gt(0).sum()) if not df_pool.empty else 0
-        coverage_ratio = pool_brands / max(len(selected_brands), 1)
-        if pool_size == 0 or coverage_ratio < 0.3:
-            p_icon, p_class = "🔴", "dq-bad"
-        elif coverage_ratio < 0.6:
-            p_icon, p_class = "🟡", "dq-warn"
+        # 3. Latest article date + last fetched
+        if days_stale is None:
+            stale_label_class = "dq-warn"
+            stale_label_msg   = "게시일 정보 없음 — 신선도 판단 불가"
+        elif stale_flag:
+            stale_label_class = "dq-bad"
+            stale_label_msg   = f"{days_stale:.0f}일 경과 — 수집 상태 확인 필요"
         else:
-            p_icon, p_class = "🟢", "dq-ok"
+            stale_label_class = "dq-ok"
+            stale_label_msg   = "최신 상태 양호"
 
-        with dq_cols[2]:
+        with dq_r3:
             st.markdown(
                 f'<div class="dq-box">'
-                f'<div class="kpi-label">Market Pool Coverage</div>'
-                f'<div class="kpi-value" style="font-size:1.6rem;">'
-                f'{p_icon} {pool_brands}/{len(selected_brands)} brands</div>'
-                f'<div class="{p_class}" style="font-size:0.78rem;margin-top:0.3rem;">'
-                f'{pool_size} unique articles in pool'
-                f'</div></div>',
+                f'<div class="kpi-label">최신 기사 날짜 / 마지막 수집</div>'
+                f'<div class="kpi-value" style="font-size:1.05rem;margin-top:0.1rem;">'
+                f'{html.escape(latest_ist_str)}</div>'
+                f'<div style="font-size:0.73rem;color:#8AAABE;margin-top:0.15rem;">'
+                f'수집 시각: {html.escape(fetched_at_str)}</div>'
+                f'<div class="{stale_label_class}" style="font-size:0.76rem;margin-top:0.2rem;">'
+                f'{stale_label_msg}</div>'
+                f'</div>',
                 unsafe_allow_html=True,
             )
     else:
-        st.info("No data available for quality check.")
+        st.info("품질 점검에 사용할 데이터가 없습니다.")
 
 # ── CSV Download ──────────────────────────────────────────────────────────────
 st.markdown("<br>", unsafe_allow_html=True)
 if not df_brand.empty:
-    csv_data = df_brand[["Brand", "Category", "Title", "Published", "Link", "Summary"]].to_csv(
-        index=False
-    )
+    csv_data = df_brand[
+        ["Brand", "Category", "Title", "Published", "Link", "Summary"]
+    ].to_csv(index=False)
     st.download_button(
-        label="⬇️ Download Brand Articles as CSV",
+        label="⬇️ 기사 CSV 다운로드",
         data=csv_data,
-        file_name="india_auto_brand_news.csv",
+        file_name="india_auto_competitor_news.csv",
         mime="text/csv",
         use_container_width=False,
     )
@@ -736,9 +770,8 @@ if not df_brand.empty:
 # ── Disclaimer ────────────────────────────────────────────────────────────────
 st.markdown(
     '<div class="disclaimer">'
-    "⚠️ <strong>Note:</strong> This dashboard measures media and search signals derived "
-    "from Google News RSS feeds. It does not reflect actual sales volume, market share, "
-    "or financial performance of any brand."
+    "⚠️ <strong>주의:</strong> 이 대시보드는 Google News RSS 피드에서 수집한 미디어 및 검색 신호를 측정합니다. "
+    "실제 판매량, 시장 점유율, 또는 각 브랜드의 재무 성과를 반영하지 않습니다."
     "</div>",
     unsafe_allow_html=True,
 )

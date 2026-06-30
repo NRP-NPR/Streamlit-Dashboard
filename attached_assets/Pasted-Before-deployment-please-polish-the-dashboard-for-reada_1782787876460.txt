@@ -1,0 +1,64 @@
+Before deployment, please polish the dashboard for readability, Korean UI, and data freshness verification.
+
+1. Korean UI
+Translate the dashboard UI into Korean while keeping article titles in English.
+
+Use these labels:
+- Title: 인도 자동차 경쟁사 동향 대시보드
+- Subtitle: 인도 자동차 시장의 경쟁사 뉴스, 미디어 노출, 전략 신호를 모니터링하는 대시보드
+- Brand Articles Collected: 수집 기사 수
+- Competitors Tracked: 추적 브랜드 수
+- Top Mentioned Brand: 최다 언급 브랜드
+- Top Signal Type: 주요 전략 신호
+- News Mentions by Brand: 브랜드별 뉴스 언급량
+- Share of Voice: 뉴스 언급 점유율
+- Strategic Signals by Brand: 브랜드별 전략 신호
+- Recent Articles: 최근 기사 목록
+- Data Quality Check: 데이터 품질 점검
+
+Keep article titles and source names in English.
+
+2. Improve readability
+- Make all KPI cards equal height.
+- KPI cards should contain only label, main value, and a very short subtitle.
+- Remove long explanations from inside KPI cards.
+- Move explanations into a collapsible expander named "대시보드 해석 가이드".
+- Keep the design clean, corporate, blue and white.
+- Reduce excess vertical spacing.
+- Make charts easier to read.
+
+3. Add freshness indicators
+Add a top section or small info row showing:
+- 최종 업데이트 시각: when RSS data was last fetched
+- 최신 기사 날짜: the most recent article published date in the collected data
+- 데이터 수집 기준: recent 7 days / 30 days depending on selected filter
+
+Use India Standard Time for timestamps if possible.
+
+4. Add date range filter
+Add a sidebar filter:
+- 최근 1일
+- 최근 7일
+- 최근 30일
+
+Use the selected range in Google News RSS queries:
+- 1 day: when:1d
+- 7 days: when:7d
+- 30 days: when:30d
+
+Default should be 최근 7일.
+
+5. Data quality section
+Keep the Data Quality Check section collapsed by default.
+It should show:
+- Raw articles collected
+- Articles after deduplication
+- Other ratio
+- Latest article date
+- Last fetched time
+- Warning if the latest article is older than 3 days:
+  "최신 기사 날짜가 3일 이상 오래되었습니다. RSS 수집 상태를 확인하세요."
+
+6. Keep the app deployable on Streamlit Community Cloud.
+Make sure requirements.txt includes all dependencies.
+Do not convert this app to React, Next.js, Flask, FastAPI, or Vercel.
